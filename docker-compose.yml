@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+#  app:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+  postgres:
+    image: postgres:latest
+    container_name: db_service
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: quiziz
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  redis:
+    image: redis:latest
+    container_name: redis_service
+    ports:
+      - "6384:6379"
+    command: redis-server --requirepass demo
+    environment:
+      - REDIS_PASSWORD=demo
+    volumes:
+      - redis_data:/data
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:
