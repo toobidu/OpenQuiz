@@ -13,6 +13,5 @@ Dự án backend cho game kiểu Quizizz, sử dụng Java Spring Boot, WebSocke
 - Java 21 + Spring Boot
 - Spring Web + Spring Security + WebSocket
 - PostgreSQL + Redis
-- JPA/Hibernate + Flyway
+- JPA/Hibernate 
 - JWT Auth
-- Elasticsearch (recommendation / search)
