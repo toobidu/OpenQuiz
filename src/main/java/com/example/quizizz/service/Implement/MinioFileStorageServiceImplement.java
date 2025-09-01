@@ -9,9 +9,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
+/**
+ * Service lưu trữ file sử dụng MinIO (avatar, hình ảnh quiz).
+ * Đảm bảo bucket tồn tại, upload và xóa file, trả về URL file.
+ */
 @Service
 @RequiredArgsConstructor
-public class MinioFileStorageService implements IFileStorageService {
+public class MinioFileStorageServiceImplement implements IFileStorageService {
 
     private final MinioClient minioClient;
 
@@ -21,6 +25,13 @@ public class MinioFileStorageService implements IFileStorageService {
     @Value("${minio.image-bucket}")
     private String imageBucket;
 
+    /**
+     * Upload avatar cho người dùng lên MinIO.
+     * @param file File avatar
+     * @param userId Id người dùng
+     * @return URL file avatar
+     * @throws Exception Nếu upload lỗi
+     */
     @Override
     public String uploadAvatar(MultipartFile file, Long userId) throws Exception {
         ensureBucketExists(avatarBucket);
@@ -36,6 +47,13 @@ public class MinioFileStorageService implements IFileStorageService {
         return getFileUrl(avatarBucket, fileName);
     }
 
+    /**
+     * Upload hình ảnh quiz lên MinIO.
+     * @param file File hình ảnh
+     * @param quizId Id quiz
+     * @return URL file hình ảnh
+     * @throws Exception Nếu upload lỗi
+     */
     @Override
     public String uploadQuizImage(MultipartFile file, Long quizId) throws Exception {
         ensureBucketExists(imageBucket);
@@ -51,6 +69,12 @@ public class MinioFileStorageService implements IFileStorageService {
         return getFileUrl(imageBucket, fileName);
     }
 
+    /**
+     * Xóa file khỏi MinIO.
+     * @param bucketName Tên bucket
+     * @param fileName Tên file
+     * @throws Exception Nếu xóa lỗi
+     */
     @Override
     public void deleteFile(String bucketName, String fileName) throws Exception {
         minioClient.removeObject(
@@ -61,6 +85,11 @@ public class MinioFileStorageService implements IFileStorageService {
         );
     }
 
+    /**
+     * Đảm bảo bucket tồn tại, nếu chưa thì tạo mới.
+     * @param bucketName Tên bucket
+     * @throws Exception Nếu lỗi MinIO
+     */
     private void ensureBucketExists(String bucketName) throws Exception {
         boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
         if (!found) {
@@ -68,10 +97,21 @@ public class MinioFileStorageService implements IFileStorageService {
         }
     }
 
+    /**
+     * Lấy URL truy cập file từ bucket và tên file.
+     * @param bucketName Tên bucket
+     * @param fileName Tên file
+     * @return Đường dẫn file
+     */
     private String getFileUrl(String bucketName, String fileName) {
-        return String.format("%s/%s/%s", minioClient.getObjectUrl(bucketName, fileName), bucketName, fileName);
+        return "/" + bucketName + "/" + fileName;
     }
 
+    /**
+     * Lấy phần mở rộng của file.
+     * @param fileName Tên file
+     * @return Phần mở rộng (ví dụ: .jpg)
+     */
     private String getFileExtension(String fileName) {
         return fileName != null && fileName.contains(".")
             ? fileName.substring(fileName.lastIndexOf("."))

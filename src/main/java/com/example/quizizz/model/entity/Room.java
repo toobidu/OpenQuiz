@@ -2,6 +2,10 @@ package com.example.quizizz.model.entity;
 
 import java.io.Serializable;
 import java.time.Duration;
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,6 +36,9 @@ public class Room implements Serializable {
     @Column(name = "room_mode", nullable = false)
     private String roomMode;
 
+    @Column(name = "topic_id", nullable = false)
+    private Long topicId;
+
     @Column(name = "is_private")
     private Boolean isPrivate;
 
@@ -50,5 +57,13 @@ public class Room implements Serializable {
      */
     @Column(name = "time_limit")
     private Duration timeLimit;
+
+    @Column(name = "created_at")
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
 }

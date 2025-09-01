@@ -1,0 +1,65 @@
+package com.example.quizizz.controller;
+
+import com.example.quizizz.enums.MessageCode;
+import com.example.quizizz.model.dto.authentication.LoginRequest;
+import com.example.quizizz.model.dto.authentication.LoginResponse;
+import com.example.quizizz.model.dto.authentication.RegisterRequest;
+import com.example.quizizz.model.dto.authentication.RegisterResponse;
+import com.example.quizizz.model.dto.authentication.ResetPasswordRequest;
+import com.example.quizizz.model.dto.authentication.ResetPasswordResponse;
+import com.example.quizizz.config.ApiResponse;
+import com.example.quizizz.service.Interface.IAuthService;
+import com.example.quizizz.security.JwtUtil;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
+@Tag(name = "Authentication", description = "APIs liên quan đến đăng nhập, đăng ký")
+public class AuthController {
+
+    private final IAuthService authService;
+    private final JwtUtil jwtUtil;
+
+    @Operation(summary = "Đăng ký tài khoản", description = "Đăng ký tài khoản mới cho người dùng")
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<RegisterResponse>> register(@Valid @RequestBody RegisterRequest request) {
+        RegisterResponse response = authService.register(request);
+        return ResponseEntity.ok(ApiResponse.success(MessageCode.USER_CREATED, response));
+    }
+
+    @Operation(summary = "Đăng nhập", description = "Đăng nhập hệ thống")
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+        LoginResponse response = authService.login(request);
+        return ResponseEntity.ok(ApiResponse.success(MessageCode.AUTH_LOGIN_SUCCESS, response));
+    }
+
+    @Operation(summary = "Đăng xuất", description = "Đăng xuất khỏi hệ thống")
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> logout(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring(7); 
+        authService.logout(token);
+        return ResponseEntity.ok(ApiResponse.success(MessageCode.AUTH_LOGOUT_SUCCESS, "Logout successful"));
+    }
+
+    @Operation(summary = "Làm mới token", description = "Lấy access token mới từ refresh token")
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginResponse>> refreshToken(@RequestBody String refreshToken) {
+        LoginResponse response = authService.refreshToken(refreshToken);
+        return ResponseEntity.ok(ApiResponse.success(MessageCode.AUTH_TOKEN_REFRESHED, response));
+    }
+
+    @Operation(summary = "Reset mật khẩu", description = "Reset mật khẩu người dùng qua email và tự động đăng xuất tất cả thiết bị")
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<ResetPasswordResponse>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        ResetPasswordResponse response = authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success(MessageCode.AUTH_PASSWORD_RESET_SUCCESS, response));
+    }
+}

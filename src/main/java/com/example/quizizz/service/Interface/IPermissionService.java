@@ -1,0 +1,15 @@
+package com.example.quizizz.service.Interface;
+
+import com.example.quizizz.model.dto.permission.CreatePermissionRequest;
+import com.example.quizizz.model.dto.permission.PermissionResponse;
+import com.example.quizizz.model.dto.permission.UpdatePermissionRequest;
+
+import java.util.List;
+
+public interface IPermissionService {
+    PermissionResponse create(CreatePermissionRequest request);
+    PermissionResponse update(Long id, UpdatePermissionRequest request);
+    void delete(Long id);
+    PermissionResponse getById(Long id);
+    List<PermissionResponse> getAll();
+}

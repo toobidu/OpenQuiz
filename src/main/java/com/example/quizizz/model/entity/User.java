@@ -1,6 +1,7 @@
 package com.example.quizizz.model.entity;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,7 +39,7 @@ public class User extends BaseEntity{
     @Column(name = "type_account", nullable = false)
     private String typeAccount;
 
-    @Column(name = "birthday", nullable = false)
+    @Column(name = "dob", nullable = false)
     private LocalDate dob;
 
     @Column(name = "avatar_url")
@@ -48,5 +49,5 @@ public class User extends BaseEntity{
     private boolean isOnline;
 
     @Column(name = "last_online_time")
-    private LocalDate lastOnlineTime;
+    private LocalDateTime lastOnlineTime;
 }

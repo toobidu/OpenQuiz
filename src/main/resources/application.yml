@@ -1,10 +1,7 @@
 spring:
   datasource:
-    url: ${DB_URL}
+    url: jdbc:postgresql://localhost:5436/quiziz
     database: quiziz
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    username: demo
+    password: demo
     driver-class-name: org.postgresql.Driver
-
-server:
-  port: 8081

@@ -27,10 +27,11 @@ public class RedisServiceImplement implements IRedisService {
         try {
             redisTemplate.delete(key);
             if (permissions != null && !permissions.isEmpty()) {
-                Set<String> permissionNames = permissions.stream()
-                        .map(PermissionCode::name)
+                // Sửa tại đây: dùng getCode() thay vì name()
+                Set<String> permissionCodes = permissions.stream()
+                        .map(PermissionCode::getCode)
                         .collect(Collectors.toSet());
-                permissionNames.forEach(p -> redisTemplate.opsForSet().add(key, p));
+                permissionCodes.forEach(p -> redisTemplate.opsForSet().add(key, p));
                 redisTemplate.expire(key, 24, TimeUnit.HOURS);
             }
         } catch (Exception e) {
@@ -43,10 +44,10 @@ public class RedisServiceImplement implements IRedisService {
         String key = RedisKeyPrefix.USER_PERMISSIONS.format(userId);
         try {
             if (newPermissions != null && !newPermissions.isEmpty()) {
-                Set<String> permissionNames = newPermissions.stream()
-                        .map(PermissionCode::name)
+                Set<String> permissionCodes = newPermissions.stream()
+                        .map(PermissionCode::getCode)
                         .collect(Collectors.toSet());
-                permissionNames.forEach(p -> redisTemplate.opsForSet().add(key, p));
+                permissionCodes.forEach(p -> redisTemplate.opsForSet().add(key, p));
                 redisTemplate.expire(key, 24, TimeUnit.HOURS);
             }
         } catch (Exception e) {
@@ -59,10 +60,11 @@ public class RedisServiceImplement implements IRedisService {
         String key = RedisKeyPrefix.USER_PERMISSIONS.format(userId);
         try {
             if (permissionsToRemove != null && !permissionsToRemove.isEmpty()) {
-                String[] permissionNames = permissionsToRemove.stream()
-                        .map(PermissionCode::name)
+                // Sửa tại đây: dùng getCode() thay vì name()
+                String[] permissionCodes = permissionsToRemove.stream()
+                        .map(PermissionCode::getCode)
                         .toArray(String[]::new);
-                redisTemplate.opsForSet().remove(key, (Object[]) permissionNames);
+                redisTemplate.opsForSet().remove(key, (Object[]) permissionCodes);
             }
         } catch (Exception e) {
             throw new RuntimeException("Error removing permissions", e);
@@ -75,15 +77,15 @@ public class RedisServiceImplement implements IRedisService {
         try {
             Set<Object> data = redisTemplate.opsForSet().members(key);
             if (data == null || data.isEmpty()) return Collections.emptySet();
-            
+
+            // Sửa tại đây: map từ code sang enum
             return data.stream()
                     .map(Object::toString)
-                    .map(name -> {
-                        try {
-                            return PermissionCode.valueOf(name);
-                        } catch (IllegalArgumentException e) {
-                            return null; // Skip invalid enum values
+                    .map(code -> {
+                        for (PermissionCode p : PermissionCode.values()) {
+                            if (p.getCode().equals(code)) return p;
                         }
+                        return null;
                     })
                     .filter(permission -> permission != null)
                     .collect(Collectors.toSet());
@@ -96,7 +98,8 @@ public class RedisServiceImplement implements IRedisService {
     public boolean hasPermission(Long userId, PermissionCode permission) {
         String key = RedisKeyPrefix.USER_PERMISSIONS.format(userId);
         try {
-            Boolean isMember = redisTemplate.opsForSet().isMember(key, permission.name());
+            // Sửa tại đây: dùng getCode() thay vì name()
+            Boolean isMember = redisTemplate.opsForSet().isMember(key, permission.getCode());
             return Boolean.TRUE.equals(isMember);
         } catch (Exception e) {
             return false;

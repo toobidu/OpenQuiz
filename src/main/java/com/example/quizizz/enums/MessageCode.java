@@ -24,11 +24,16 @@ public enum MessageCode {
     AUTH_LOGIN_SUCCESS("MSG_2001", "Login successful"),
     AUTH_LOGOUT_SUCCESS("MSG_2002", "Logout successful"),
     AUTH_TOKEN_REFRESHED("MSG_2003", "Token refreshed successfully"),
+    AUTH_PASSWORD_RESET_SUCCESS("MSG_2004", "Password reset successfully"),
+    AUTH_PASSWORD_RESET_EMAIL_SENT("MSG_2005", "Password reset email sent successfully"),
+    AUTH_ALL_DEVICES_LOGGED_OUT("MSG_2006", "All devices logged out successfully"),
     AUTH_INVALID_TOKEN("ERR_2001", "Invalid or expired token"),
     AUTH_TOKEN_REQUIRED("ERR_2002", "Authentication token required"),
     AUTH_LOGIN_FAILED("ERR_2003", "Login failed"),
     AUTH_PASSWORD_INCORRECT("ERR_2004", "Incorrect password"),
-    
+    AUTH_PASSWORD_RESET_FAILED("ERR_2005", "Password reset failed"),
+    AUTH_EMAIL_SEND_FAILED("ERR_2006", "Failed to send email"),
+
     // ============ PERMISSIONS & ROLES ============
     PERMISSION_GRANTED("MSG_3001", "Permission granted successfully"),
     PERMISSION_REVOKED("MSG_3002", "Permission revoked successfully"),
@@ -38,6 +43,10 @@ public enum MessageCode {
     ROLE_NOT_FOUND("ERR_3002", "Role not found"),
     PERMISSION_NOT_FOUND("ERR_3003", "Permission not found"),
     INSUFFICIENT_PRIVILEGES("ERR_3004", "Insufficient privileges"),
+    PERMISSION_ALREADY_EXISTS("ERR_3005", "Permission already exists"),
+    ROLE_ALREADY_EXISTS("ERR_3006", "Role already exists"),
+    ROLE_DELETE_FAILED("ERR_3007", "Delete role failed"),
+    PERMISSION_DELETE_FAILED("ERR_3008", "Delete permission failed"),
     
     // ============ QUIZ & QUESTIONS ============
     QUIZ_CREATED("MSG_4001", "Quiz created successfully"),

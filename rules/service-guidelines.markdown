@@ -16,3 +16,12 @@ public interface RoomService {
     void startGame(Long roomId);
 }
 ```
+
+## Tích hợp Recommendation
+- `RecommendationService` gọi Python FastAPI:
+  ```java
+  public List<Long> getRecommendedUsers(Long userId, double[] preferences) {
+      // HTTP call to Python /recommend
+      // Parse response to List<Long>
+  }
+  ```

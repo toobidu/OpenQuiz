@@ -21,7 +21,7 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000", // Frontend dev
+                "http://localhost:5173", // Frontend dev
                 "https://your-production-domain.com" // Production domain
         ));
         config.setAllowedHeaders(Arrays.asList(

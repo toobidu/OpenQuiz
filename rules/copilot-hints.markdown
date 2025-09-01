@@ -7,3 +7,6 @@
 - Each game session is started by host -> all players receive question via `/topic/rooms/{roomId}`
 - Answers are submitted via `/app/rooms/{roomId}/answer`
 - JWT auth: access token stored in Authorization header
+- Recommendation: Call Python FastAPI endpoint (`POST /recommend`) for cosine similarity results
+- Log errors with SLF4J, include request ID for tracing
+- Test APIs with Postman or Curl before integrating with frontend
