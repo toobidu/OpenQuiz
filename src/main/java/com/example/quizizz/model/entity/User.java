@@ -42,7 +42,7 @@ public class User extends BaseEntity{
     @Column(name = "dob", nullable = false)
     private LocalDate dob;
 
-    @Column(name = "avatar_url")
+    @Column(name = "avatar_url", length = 1000)
     private String avatarURL;
 
     @Column(name = "is_online", nullable = false)

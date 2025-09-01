@@ -3,6 +3,7 @@ package com.example.quizizz.service.Implement;
 import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.quizizz.enums.RedisKeyPrefix;
@@ -44,7 +45,8 @@ public class ProfileServiceImplement implements IProfileService {
         if (cachedProfile instanceof UpdateProfileResponse) {
             return (UpdateProfileResponse) cachedProfile;
         }
-                User user = userRepository.findById(userId)
+        
+        User user = userRepository.findById(userId)
             .orElseThrow(() -> new NoSuchElementException("User not found with id: " + userId));
         UpdateProfileResponse response = profileMapper.toResponse(user);
         
@@ -60,6 +62,7 @@ public class ProfileServiceImplement implements IProfileService {
      * @return Thông tin profile sau cập nhật
      */
     @Override
+    @Transactional
     public UpdateProfileResponse updateProfile(Long userId, UpdateProfileRequest request) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new NoSuchElementException("User not found with id: " + userId));
@@ -83,10 +86,13 @@ public class ProfileServiceImplement implements IProfileService {
      * @throws Exception Nếu upload lỗi
      */
     @Override
+    @Transactional
     public UpdateAvatarResponse updateAvatar(Long userId, MultipartFile file) throws Exception {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new NoSuchElementException("User not found with id: " + userId));
-        String avatarUrl = fileStorageService.uploadAvatar(file, userId); 
+        
+        // Upload file mới và lưu full URL vào DB
+        String avatarUrl = fileStorageService.uploadAvatar(file, userId);
         user.setAvatarURL(avatarUrl);
         userRepository.save(user);
         
@@ -97,5 +103,19 @@ public class ProfileServiceImplement implements IProfileService {
         UpdateAvatarResponse response = new UpdateAvatarResponse();
         response.setAvatarURL(avatarUrl);
         return response;
+    }
+
+    /**
+     * Lấy URL avatar của người dùng.
+     * @param userId Id người dùng
+     * @return Avatar URL
+     * @throws Exception Nếu lỗi
+     */
+    @Override
+    public String getAvatarUrl(Long userId) throws Exception {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NoSuchElementException("User not found with id: " + userId));
+        
+        return user.getAvatarURL(); // Trả về URL đã lưu trong DB
     }
 }

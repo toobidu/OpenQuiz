@@ -10,4 +10,5 @@ public interface IProfileService {
     UpdateProfileResponse updateProfile(Long userId, UpdateProfileRequest request);
     UpdateAvatarResponse updateAvatar(Long userId, MultipartFile file) throws Exception;
     UpdateProfileResponse getProfile(Long userId);
+    String getAvatarUrl(Long userId) throws Exception;
 }

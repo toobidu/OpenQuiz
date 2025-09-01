@@ -5,10 +5,12 @@ public enum MessageCode {
     SUCCESS("MSG_0000", "Operation successful"),
     VALIDATION_ERROR("ERR_0001", "Validation error"),
     INTERNAL_ERROR("ERR_0002", "Internal server error"),
+    INTERNAL_SERVER_ERROR("ERR_0002", "Internal server error"),
     UNAUTHORIZED("ERR_0003", "Unauthorized access"),
     FORBIDDEN("ERR_0004", "Access forbidden"),
     NOT_FOUND("ERR_0005", "Resource not found"),
     BAD_REQUEST("ERR_0006", "Bad request"),
+    INVALID_INPUT("ERR_0007", "Invalid input data"),
     
     // ============ USER ============
     USER_CREATED("MSG_1001", "User created successfully"),
@@ -117,10 +119,14 @@ public enum MessageCode {
     // ============ FILE & UPLOAD ============
     FILE_UPLOADED("MSG_10001", "File uploaded successfully"),
     FILE_DELETED("MSG_10002", "File deleted successfully"),
+    AVATAR_UPDATED("MSG_10003", "Avatar updated successfully"),
+    AVATAR_URL_RETRIEVED("MSG_10004", "Avatar URL retrieved successfully"),
     FILE_NOT_FOUND("ERR_10001", "File not found"),
     INVALID_FILE_FORMAT("ERR_10002", "Invalid file format"),
     FILE_TOO_LARGE("ERR_10003", "File size too large"),
-    UPLOAD_FAILED("ERR_10004", "File upload failed");
+    UPLOAD_FAILED("ERR_10004", "File upload failed"),
+    EMPTY_FILE("ERR_10005", "File cannot be empty"),
+    INVALID_FILE_TYPE("ERR_10006", "Invalid file type");
 
     private final String code;
     private final String defaultMessage;

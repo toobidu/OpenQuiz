@@ -2,12 +2,14 @@ package com.example.quizizz.service.Implement;
 
 import com.example.quizizz.service.Interface.IFileStorageService;
 import io.minio.*;
+import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Service lưu trữ file sử dụng MinIO (avatar, hình ảnh quiz).
@@ -25,17 +27,21 @@ public class MinioFileStorageServiceImplement implements IFileStorageService {
     @Value("${minio.image-bucket}")
     private String imageBucket;
 
+    @Value("${minio.endpoint}")
+    private String endpoint;
+
     /**
      * Upload avatar cho người dùng lên MinIO.
      * @param file File avatar
      * @param userId Id người dùng
-     * @return URL file avatar
+     * @return Presigned URL của file avatar
      * @throws Exception Nếu upload lỗi
      */
     @Override
     public String uploadAvatar(MultipartFile file, Long userId) throws Exception {
         ensureBucketExists(avatarBucket);
-        String fileName = "avatar_" + userId + "_" + UUID.randomUUID() + getFileExtension(file.getOriginalFilename());
+        String fileName = "avatar_" + userId + "_" + UUID.randomUUID().toString().substring(0, 8) + getFileExtension(file.getOriginalFilename());
+        
         minioClient.putObject(
             PutObjectArgs.builder()
                 .bucket(avatarBucket)
@@ -44,20 +50,22 @@ public class MinioFileStorageServiceImplement implements IFileStorageService {
                 .contentType(file.getContentType())
                 .build()
         );
-        return getFileUrl(avatarBucket, fileName);
+        
+        return getPresignedUrl(avatarBucket, fileName);
     }
 
     /**
      * Upload hình ảnh quiz lên MinIO.
      * @param file File hình ảnh
      * @param quizId Id quiz
-     * @return URL file hình ảnh
+     * @return Presigned URL của file
      * @throws Exception Nếu upload lỗi
      */
     @Override
     public String uploadQuizImage(MultipartFile file, Long quizId) throws Exception {
         ensureBucketExists(imageBucket);
-        String fileName = "quiz_" + quizId + "_" + UUID.randomUUID() + getFileExtension(file.getOriginalFilename());
+        String fileName = "quiz_" + quizId + "_" + UUID.randomUUID().toString().substring(0, 8) + getFileExtension(file.getOriginalFilename());
+        
         minioClient.putObject(
             PutObjectArgs.builder()
                 .bucket(imageBucket)
@@ -66,7 +74,8 @@ public class MinioFileStorageServiceImplement implements IFileStorageService {
                 .contentType(file.getContentType())
                 .build()
         );
-        return getFileUrl(imageBucket, fileName);
+        
+        return getPresignedUrl(imageBucket, fileName);
     }
 
     /**
@@ -86,6 +95,16 @@ public class MinioFileStorageServiceImplement implements IFileStorageService {
     }
 
     /**
+     * Lấy presigned URL để truy cập avatar.
+     * @param fileName Tên file avatar
+     * @return Presigned URL
+     */
+    @Override
+    public String getAvatarUrl(String fileName) throws Exception {
+        return getPresignedUrl(avatarBucket, fileName);
+    }
+
+    /**
      * Đảm bảo bucket tồn tại, nếu chưa thì tạo mới.
      * @param bucketName Tên bucket
      * @throws Exception Nếu lỗi MinIO
@@ -98,13 +117,20 @@ public class MinioFileStorageServiceImplement implements IFileStorageService {
     }
 
     /**
-     * Lấy URL truy cập file từ bucket và tên file.
+     * Tạo presigned URL có thời hạn để truy cập file an toàn.
      * @param bucketName Tên bucket
      * @param fileName Tên file
-     * @return Đường dẫn file
+     * @return Presigned URL có thời hạn 7 ngày
      */
-    private String getFileUrl(String bucketName, String fileName) {
-        return "/" + bucketName + "/" + fileName;
+    private String getPresignedUrl(String bucketName, String fileName) throws Exception {
+        return minioClient.getPresignedObjectUrl(
+            GetPresignedObjectUrlArgs.builder()
+                .method(Method.GET)
+                .bucket(bucketName)
+                .object(fileName)
+                .expiry(7, TimeUnit.DAYS)
+                .build()
+        );
     }
 
     /**
