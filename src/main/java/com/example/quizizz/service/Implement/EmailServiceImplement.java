@@ -1,7 +1,6 @@
 package com.example.quizizz.service.Implement;
 
 import com.example.quizizz.service.Interface.IEmailService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -17,7 +16,6 @@ import java.time.LocalDateTime;
  * Implementation của Email Service
  * Sử dụng JavaMailSender và Thymeleaf template để gửi email
  */
-@Slf4j
 @Service
 public class EmailServiceImplement implements IEmailService {
 
@@ -49,7 +47,6 @@ public class EmailServiceImplement implements IEmailService {
     @Override
     public boolean sendPasswordResetEmail(String toEmail, String username, String newPassword) {
         try {
-            log.info("Bắt đầu gửi email reset password cho user: {}", username);
 
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -74,14 +71,12 @@ public class EmailServiceImplement implements IEmailService {
             // Gửi email
             javaMailSender.send(message);
 
-            log.info("Gửi email reset password thành công cho user: {}", username);
+
             return true;
 
         } catch (MessagingException e) {
-            log.error("Lỗi khi gửi email reset password cho user {}: {}", username, e.getMessage(), e);
             return false;
         } catch (Exception e) {
-            log.error("Lỗi không xác định khi gửi email cho user {}: {}", username, e.getMessage(), e);
             return false;
         }
     }
@@ -95,7 +90,6 @@ public class EmailServiceImplement implements IEmailService {
     @Override
     public boolean sendWelcomeEmail(String toEmail, String username) {
         try {
-            log.info("Gửi email chào mừng cho user: {}", username);
 
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -119,11 +113,10 @@ public class EmailServiceImplement implements IEmailService {
             helper.setText(content, true);
             javaMailSender.send(message);
 
-            log.info("Gửi email chào mừng thành công cho user: {}", username);
+
             return true;
 
         } catch (Exception e) {
-            log.error("Lỗi khi gửi email chào mừng cho user {}: {}", username, e.getMessage(), e);
             return false;
         }
     }
@@ -138,7 +131,6 @@ public class EmailServiceImplement implements IEmailService {
     @Override
     public boolean sendNotificationEmail(String toEmail, String subject, String content) {
         try {
-            log.info("Gửi email thông báo tới: {}", toEmail);
 
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -150,11 +142,10 @@ public class EmailServiceImplement implements IEmailService {
 
             javaMailSender.send(message);
 
-            log.info("Gửi email thông báo thành công tới: {}", toEmail);
+
             return true;
 
         } catch (Exception e) {
-            log.error("Lỗi khi gửi email thông báo tới {}: {}", toEmail, e.getMessage(), e);
             return false;
         }
     }

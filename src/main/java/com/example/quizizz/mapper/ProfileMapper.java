@@ -1,4 +1,3 @@
-// Java
 package com.example.quizizz.mapper;
 
 import org.mapstruct.BeanMapping;

@@ -2,7 +2,6 @@ package com.example.quizizz.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,11 +10,9 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
-@Slf4j
 public class RedisConfig {
 
     @Value("${spring.data.redis.host}")
@@ -29,19 +26,12 @@ public class RedisConfig {
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        try {
-            log.info("Configuring Redis connection to {}:{}", redisHost, redisPort);
-            RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisHost, redisPort);
-            config.setPassword(redisPassword);
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisHost, redisPort);
+        config.setPassword(redisPassword);
 
-            LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
-            factory.afterPropertiesSet();
-            log.info("Redis connection factory created successfully");
-            return factory;
-        } catch (Exception e) {
-            log.error("Failed to create Redis connection factory: ", e);
-            throw e;
-        }
+        LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
+        factory.afterPropertiesSet();
+        return factory;
     }
 
     @Bean

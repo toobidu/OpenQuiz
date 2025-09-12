@@ -52,6 +52,30 @@ public class Room implements Serializable {
     private Integer maxPlayers;
 
     /**
+     * Số lượng câu hỏi trong phòng
+     */
+    @Column(name = "question_count", nullable = false)
+    private Integer questionCount;
+
+    /**
+     * Loại câu hỏi (MULTIPLE_CHOICE, TRUE_FALSE, FILL_BLANK)
+     */
+    @Column(name = "question_type")
+    private String questionType;
+
+    /**
+     * Thời gian đếm ngược cho mỗi câu hỏi (giây)
+     */
+    @Column(name = "countdown_time", nullable = false)
+    private Integer countdownTime;
+
+    /**
+     * Đánh dấu phòng đã có lịch sử game (không được xóa)
+     */
+    @Column(name = "has_game_history", nullable = false)
+    private Boolean hasGameHistory = false;
+
+    /**
      * Thời gian giới hạn cho phiên chơi.
      * Sử dụng Duration để lưu trữ thời gian.
      */

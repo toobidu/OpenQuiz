@@ -1,6 +1,6 @@
 package com.example.quizizz.enums;
 
 public enum RoomMode {
-    SOLO,
+    ONE_VS_ONE,
     BATTLE_ROYAL
 }

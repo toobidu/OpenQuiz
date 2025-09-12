@@ -33,9 +33,7 @@ import com.example.quizizz.service.Interface.IEmailService;
 import com.example.quizizz.util.PasswordGenerator;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -150,8 +148,6 @@ public class AuthServiceImplement implements IAuthService {
     @Override
     public ResetPasswordResponse resetPassword(ResetPasswordRequest request) {
         try {
-            log.info("Bắt đầu xử lý reset password cho email: {}", request.getEmail());
-            
             // 1. Tìm user theo email
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND.value(), 
@@ -159,17 +155,14 @@ public class AuthServiceImplement implements IAuthService {
 
             // 2. Generate password mới
             String newPassword = passwordGenerator.generateSecurePassword();
-            log.info("Đã tạo password mới cho user: {}", user.getUsername());
 
             // 3. Hash và cập nhật password trong database
             String hashedPassword = passwordEncoder.encode(newPassword);
             user.setPassword(hashedPassword);
             userRepository.save(user);
-            log.info("Đã cập nhật password mới trong database cho user: {}", user.getUsername());
 
             // 4. Logout tất cả devices của user này
             logoutAllDevices(user.getId());
-            log.info("Đã logout tất cả devices cho user: {}", user.getUsername());
 
             // 5. Gửi email với password mới
             boolean emailSent = emailService.sendPasswordResetEmail(
@@ -179,20 +172,16 @@ public class AuthServiceImplement implements IAuthService {
             );
 
             if (!emailSent) {
-                log.error("Không thể gửi email reset password cho user: {}", user.getUsername());
-                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR.value(),
                         MessageCode.AUTH_EMAIL_SEND_FAILED, "Failed to send reset password email");
             }
 
-            log.info("Hoàn thành reset password cho user: {}", user.getUsername());
             return new ResetPasswordResponse("Password reset successfully. Please check your email for the new password.", request.getEmail());
 
         } catch (ApiException e) {
-            log.error("Lỗi reset password: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("Lỗi không xác định khi reset password cho email {}: {}", request.getEmail(), e.getMessage(), e);
-            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     MessageCode.AUTH_PASSWORD_RESET_FAILED, "Password reset failed");
         }
     }
@@ -200,8 +189,6 @@ public class AuthServiceImplement implements IAuthService {
     @Override
     public void logoutAllDevices(Long userId) {
         try {
-            log.info("Bắt đầu logout tất cả devices cho user ID: {}", userId);
-            
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND.value(), MessageCode.USER_NOT_FOUND));
 
@@ -221,11 +208,8 @@ public class AuthServiceImplement implements IAuthService {
             // lưu thời gian logout trong database và kiểm tra khi validate token
             // Ở đây ta sẽ implement cách đơn giản bằng cách lưu thời gian logout
 
-            log.info("Đã logout tất cả devices cho user ID: {}", userId);
-
         } catch (Exception e) {
-            log.error("Lỗi khi logout tất cả devices cho user {}: {}", userId, e.getMessage(), e);
-            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     MessageCode.INTERNAL_ERROR, "Failed to logout all devices");
         }
     }
@@ -241,29 +225,22 @@ public class AuthServiceImplement implements IAuthService {
                     .map(p -> p.getPermissionName())
                     .collect(Collectors.toSet());
 
-            log.info("Permissions from DB for user {}: {}", userId, permissionNames);
-
             // Chuyển từ code sang enum PermissionCode
             Set<com.example.quizizz.enums.PermissionCode> permissionCodes = permissionNames.stream()
                     .map(code -> {
                         for (com.example.quizizz.enums.PermissionCode p : com.example.quizizz.enums.PermissionCode.values()) {
                             if (p.getCode().equals(code)) return p;
                         }
-                        log.warn("Invalid permission code: {}", code);
                         return null;
                     })
                     .filter(p -> p != null)
                     .collect(Collectors.toSet());
 
-            log.info("Permission codes for user {}: {}", userId, permissionCodes);
-
             // Lưu vào Redis
             redisService.saveUserPermissions(userId, permissionCodes);
 
-            log.info("Successfully saved permissions to Redis for user: {}", userId);
         } catch (Exception e) {
-            log.error("Error refreshing user permissions for user {}: {}", userId, e.getMessage(), e);
+            e.printStackTrace();
         }
     }
 }
-

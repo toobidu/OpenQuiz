@@ -72,6 +72,11 @@ public class JwtUtil {
         return null;
     }
 
+    // Lấy username từ token (subject)
+    public String getUsernameFromToken(String token) {
+        return getClaimFromToken(token, Claims::getSubject);
+    }
+
     // Lấy custom claim từ token
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
         Claims claims = getAllClaimsFromToken(token);

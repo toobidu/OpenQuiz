@@ -16,15 +16,15 @@ public class ApiResponse<T> {
     private T data;
 
     public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(200, MessageCode.SUCCESS.getCode(), MessageCode.SUCCESS.getDefaultMessage(), data);
+        return new ApiResponse<>(200, MessageCode.SUCCESS.getCode(), MessageCode.SUCCESS.getMessage(), data);
     }
 
     public static <T> ApiResponse<T> success(MessageCode messageCode, T data) {
-        return new ApiResponse<>(200, messageCode.getCode(), messageCode.getDefaultMessage(), data);
+        return new ApiResponse<>(200, messageCode.getCode(), messageCode.getMessage(), data);
     }
 
     public static <T> ApiResponse<T> error(int status, MessageCode messageCode) {
-        return new ApiResponse<>(status, messageCode.getCode(), messageCode.getDefaultMessage(), null);
+        return new ApiResponse<>(status, messageCode.getCode(), messageCode.getMessage(), null);
     }
 
     public static <T> ApiResponse<T> error(int status, MessageCode messageCode, String customMessage) {

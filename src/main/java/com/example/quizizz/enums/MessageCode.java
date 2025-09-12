@@ -11,7 +11,7 @@ public enum MessageCode {
     NOT_FOUND("ERR_0005", "Resource not found"),
     BAD_REQUEST("ERR_0006", "Bad request"),
     INVALID_INPUT("ERR_0007", "Invalid input data"),
-    
+
     // ============ USER ============
     USER_CREATED("MSG_1001", "User created successfully"),
     USER_UPDATED("MSG_1002", "User updated successfully"),
@@ -21,7 +21,7 @@ public enum MessageCode {
     USER_INVALID_CREDENTIALS("ERR_1003", "Invalid username or password"),
     USER_ACCOUNT_LOCKED("ERR_1004", "User account is locked"),
     USER_ACCOUNT_DISABLED("ERR_1005", "User account is disabled"),
-    
+
     // ============ AUTHENTICATION ============
     AUTH_LOGIN_SUCCESS("MSG_2001", "Login successful"),
     AUTH_LOGOUT_SUCCESS("MSG_2002", "Logout successful"),
@@ -49,73 +49,80 @@ public enum MessageCode {
     ROLE_ALREADY_EXISTS("ERR_3006", "Role already exists"),
     ROLE_DELETE_FAILED("ERR_3007", "Delete role failed"),
     PERMISSION_DELETE_FAILED("ERR_3008", "Delete permission failed"),
-    
+
+    // ============ ROOM ============
+    ROOM_CREATED("MSG_4001", "Room created successfully"),
+    ROOM_UPDATED("MSG_4002", "Room updated successfully"),
+    ROOM_DELETED("MSG_4003", "Room deleted successfully"),
+    ROOM_JOINED("MSG_4004", "Joined room successfully"),
+    ROOM_LEFT("MSG_4005", "Left room successfully"),
+    ROOM_HOST_TRANSFERRED("MSG_4006", "Host transferred successfully"),
+    ROOM_NOT_FOUND("ERR_4001", "Room not found"),
+    ROOM_FULL("ERR_4002", "Room is full"),
+    ROOM_ALREADY_STARTED("ERR_4003", "Room game already started"),
+    ROOM_CODE_INVALID("ERR_4004", "Invalid room code"),
+    ROOM_PERMISSION_DENIED("ERR_4005", "Permission denied for this room action"),
+    ROOM_ALREADY_JOINED("ERR_4006", "User already joined this room"),
+    ROOM_NOT_JOINED("ERR_4007", "User has not joined this room"),
+    ROOM_INVALID_MODE("ERR_4008", "Invalid room mode"),
+    ROOM_INVALID_MAX_PLAYERS("ERR_4009", "Invalid maximum players for this mode"),
+
+    // ============ TOPIC ============
+    TOPIC_CREATED("MSG_5001", "Topic created successfully"),
+    TOPIC_UPDATED("MSG_5002", "Topic updated successfully"),
+    TOPIC_DELETED("MSG_5003", "Topic deleted successfully"),
+    TOPIC_ALREADY_EXISTS("ERR_5004", "Topic already exists"),
+    TOPIC_DELETE_FAILED("ERR_5005", "Delete topic failed"),
+    TOPIC_UPDATE_FAILED("ERR_5006", "Update topic failed"),
+    TOPIC_CREATE_FAILED("ERR_5007", "Create topic failed"),
+    TOPIC_NOT_FOUND("ERR_5001", "Topic not found"),
+    TOPIC_INVALID("ERR_5002", "Invalid topic"),
+
     // ============ QUIZ & QUESTIONS ============
-    QUIZ_CREATED("MSG_4001", "Quiz created successfully"),
-    QUIZ_UPDATED("MSG_4002", "Quiz updated successfully"),
-    QUIZ_DELETED("MSG_4003", "Quiz deleted successfully"),
-    QUIZ_PUBLISHED("MSG_4004", "Quiz published successfully"),
-    QUESTION_CREATED("MSG_4005", "Question created successfully"),
-    QUESTION_UPDATED("MSG_4006", "Question updated successfully"),
-    QUESTION_DELETED("MSG_4007", "Question deleted successfully"),
-    QUIZ_NOT_FOUND("ERR_4001", "Quiz not found"),
-    QUESTION_NOT_FOUND("ERR_4002", "Question not found"),
-    QUIZ_ALREADY_PUBLISHED("ERR_4003", "Quiz is already published"),
-    QUIZ_NOT_PUBLISHED("ERR_4004", "Quiz is not published yet"),
-    INVALID_QUESTION_TYPE("ERR_4005", "Invalid question type"),
-    ANSWER_NOT_FOUND("ERR_4006", "Answer not found"),
-    TOPIC_NOT_FOUND("ERR_4007", "Topic not found"),
-    
-    // ============ ROOM & GAME SESSION ============
-    ROOM_CREATED("MSG_5001", "Room created successfully"),
-    ROOM_UPDATED("MSG_5002", "Room updated successfully"),
-    ROOM_DELETED("MSG_5003", "Room deleted successfully"),
-    PLAYER_JOINED_ROOM("MSG_5004", "Player joined room successfully"),
-    PLAYER_LEFT_ROOM("MSG_5005", "Player left room successfully"),
-    GAME_STARTED("MSG_5006", "Game started successfully"),
-    GAME_ENDED("MSG_5007", "Game ended successfully"),
-    GAME_PAUSED("MSG_5008", "Game paused successfully"),
-    GAME_RESUMED("MSG_5009", "Game resumed successfully"),
-    ROOM_NOT_FOUND("ERR_5001", "Room not found"),
-    ROOM_FULL("ERR_5002", "Room is full"),
-    ROOM_NOT_AVAILABLE("ERR_5003", "Room is not available"),
-    PLAYER_ALREADY_IN_ROOM("ERR_5004", "Player is already in the room"),
-    PLAYER_NOT_IN_ROOM("ERR_5005", "Player is not in the room"),
-    GAME_NOT_FOUND("ERR_5006", "Game session not found"),
-    GAME_ALREADY_STARTED("ERR_5007", "Game has already started"),
-    GAME_NOT_STARTED("ERR_5008", "Game has not started yet"),
-    GAME_ALREADY_ENDED("ERR_5009", "Game has already ended"),
-    INVALID_ROOM_STATUS("ERR_5010", "Invalid room status"),
-    INVALID_GAME_STATUS("ERR_5011", "Invalid game status"),
-    
-    // ============ PLAYER PROFILE & RANK ============
-    PROFILE_UPDATED("MSG_6001", "Player profile updated successfully"),
-    RANK_UPDATED("MSG_6002", "Player rank updated successfully"),
-    PROFILE_NOT_FOUND("ERR_6001", "Player profile not found"),
-    RANK_NOT_FOUND("ERR_6002", "Rank not found"),
-    INVALID_RANK("ERR_6003", "Invalid rank"),
-    
+    QUIZ_CREATED("MSG_6001", "Quiz created successfully"),
+    QUIZ_UPDATED("MSG_6002", "Quiz updated successfully"),
+    QUIZ_DELETED("MSG_6003", "Quiz deleted successfully"),
+    QUIZ_PUBLISHED("MSG_6004", "Quiz published successfully"),
+    QUESTION_CREATED("MSG_6005", "Question created successfully"),
+    QUESTION_UPDATED("MSG_6006", "Question updated successfully"),
+    QUESTION_DELETED("MSG_6007", "Question deleted successfully"),
+    QUIZ_NOT_FOUND("ERR_6001", "Quiz not found"),
+    QUESTION_NOT_FOUND("ERR_6002", "Question not found"),
+    QUIZ_ALREADY_PUBLISHED("ERR_6003", "Quiz is already published"),
+    QUIZ_NOT_PUBLISHED("ERR_6004", "Quiz is not published yet"),
+    INVALID_QUESTION_TYPE("ERR_6005", "Invalid question type"),
+    ANSWER_NOT_FOUND("ERR_6006", "Answer not found"),
+
+    // ============ GAME SESSION ============
+    GAME_STARTED("MSG_7001", "Game started successfully"),
+    GAME_ENDED("MSG_7002", "Game ended successfully"),
+    GAME_PAUSED("MSG_7003", "Game paused successfully"),
+    GAME_RESUMED("MSG_7004", "Game resumed successfully"),
+    PLAYER_JOINED_GAME("MSG_7005", "Player joined game successfully"),
+    PLAYER_LEFT_GAME("MSG_7006", "Player left game successfully"),
+    GAME_NOT_FOUND("ERR_7001", "Game session not found"),
+    GAME_ALREADY_STARTED("ERR_7002", "Game has already started"),
+    GAME_NOT_STARTED("ERR_7003", "Game has not started yet"),
+    GAME_ALREADY_ENDED("ERR_7004", "Game has already ended"),
+    INVALID_GAME_STATUS("ERR_7005", "Invalid game status"),
+    PLAYER_ALREADY_IN_GAME("ERR_7006", "Player is already in the game"),
+    PLAYER_NOT_IN_GAME("ERR_7007", "Player is not in the game"),
+
     // ============ ANSWERS & SCORING ============
-    ANSWER_SUBMITTED("MSG_7001", "Answer submitted successfully"),
-    SCORE_CALCULATED("MSG_7002", "Score calculated successfully"),
-    LEADERBOARD_UPDATED("MSG_7003", "Leaderboard updated successfully"),
-    INVALID_ANSWER("ERR_7001", "Invalid answer"),
-    ANSWER_TIME_EXPIRED("ERR_7002", "Answer time has expired"),
-    ALREADY_ANSWERED("ERR_7003", "Question already answered"),
-    
+    ANSWER_SUBMITTED("MSG_8001", "Answer submitted successfully"),
+    SCORE_CALCULATED("MSG_8002", "Score calculated successfully"),
+    LEADERBOARD_UPDATED("MSG_8003", "Leaderboard updated successfully"),
+    INVALID_ANSWER("ERR_8001", "Invalid answer"),
+    ANSWER_TIME_EXPIRED("ERR_8002", "Answer time has expired"),
+    ALREADY_ANSWERED("ERR_8003", "Question already answered"),
+
     // ============ SOCKET & REAL-TIME ============
-    SOCKET_CONNECTED("MSG_8001", "Socket connected successfully"),
-    SOCKET_DISCONNECTED("MSG_8002", "Socket disconnected"),
-    EVENT_BROADCASTED("MSG_8003", "Event broadcasted successfully"),
-    SOCKET_CONNECTION_FAILED("ERR_8001", "Socket connection failed"),
-    INVALID_SOCKET_EVENT("ERR_8002", "Invalid socket event"),
-    
-    // ============ CACHE & REDIS ============
-    CACHE_UPDATED("MSG_9001", "Cache updated successfully"),
-    CACHE_CLEARED("MSG_9002", "Cache cleared successfully"),
-    CACHE_ERROR("ERR_9001", "Cache operation failed"),
-    REDIS_CONNECTION_ERROR("ERR_9002", "Redis connection error"),
-    
+    SOCKET_CONNECTED("MSG_9001", "Socket connected successfully"),
+    SOCKET_DISCONNECTED("MSG_9002", "Socket disconnected"),
+    EVENT_BROADCASTED("MSG_9003", "Event broadcasted successfully"),
+    SOCKET_CONNECTION_FAILED("ERR_9001", "Socket connection failed"),
+    INVALID_SOCKET_EVENT("ERR_9002", "Invalid socket event"),
+
     // ============ FILE & UPLOAD ============
     FILE_UPLOADED("MSG_10001", "File uploaded successfully"),
     FILE_DELETED("MSG_10002", "File deleted successfully"),
@@ -129,18 +136,18 @@ public enum MessageCode {
     INVALID_FILE_TYPE("ERR_10006", "Invalid file type");
 
     private final String code;
-    private final String defaultMessage;
+    private final String message;
 
-    MessageCode(String code, String defaultMessage) {
+    MessageCode(String code, String message) {
         this.code = code;
-        this.defaultMessage = defaultMessage;
+        this.message = message;
     }
 
     public String getCode() {
         return code;
     }
 
-    public String getDefaultMessage() {
-        return defaultMessage;
+    public String getMessage() {
+        return message;
     }
 }

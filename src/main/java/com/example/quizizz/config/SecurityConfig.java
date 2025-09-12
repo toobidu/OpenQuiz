@@ -18,7 +18,7 @@ import com.example.quizizz.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
-@EnableMethodSecurity(prePostEnabled = true) // Thêm dòng này
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 

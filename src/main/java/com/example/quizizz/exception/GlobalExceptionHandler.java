@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
                 .findFirst()
-                .orElse(MessageCode.VALIDATION_ERROR.getDefaultMessage());
+                .orElse(MessageCode.VALIDATION_ERROR.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

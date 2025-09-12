@@ -32,6 +32,21 @@ public class RoomPlayers implements Serializable {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "is_host", nullable = false)
+    private Boolean isHost = false;
+
+    /**
+     * Thứ tự tham gia phòng (dùng để xác định host tiếp theo khi host rời phòng)
+     */
+    @Column(name = "join_order", nullable = false)
+    private Integer joinOrder;
+
+    /**
+     * Trạng thái: ACTIVE, KICKED, LEFT
+     */
+    @Column(name = "status", nullable = false)
+    private String status = "ACTIVE";
+
     @Column(name = "time_taken")
     private Integer timeTaken;
 

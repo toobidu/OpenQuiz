@@ -13,9 +13,8 @@ public class PasswordGenerator {
     private static final String UPPERCASE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final String LOWERCASE_LETTERS = "abcdefghijklmnopqrstuvwxyz";
     private static final String NUMBERS = "0123456789";
-    private static final String SPECIAL_CHARACTERS = "!@#$%^&*()_+-=[]{}|;:,.<>?";
-    
-    private static final String ALL_CHARACTERS = UPPERCASE_LETTERS + LOWERCASE_LETTERS + NUMBERS + SPECIAL_CHARACTERS;
+
+    private static final String ALL_CHARACTERS = UPPERCASE_LETTERS + LOWERCASE_LETTERS + NUMBERS;
     private static final int PASSWORD_LENGTH = 12;
     
     private final SecureRandom secureRandom = new SecureRandom();
@@ -33,8 +32,7 @@ public class PasswordGenerator {
         password.append(getRandomCharacter(UPPERCASE_LETTERS));
         password.append(getRandomCharacter(LOWERCASE_LETTERS));
         password.append(getRandomCharacter(NUMBERS));
-        password.append(getRandomCharacter(SPECIAL_CHARACTERS));
-        
+
         // Điền các ký tự còn lại ngẫu nhiên
         for (int i = 4; i < PASSWORD_LENGTH; i++) {
             password.append(getRandomCharacter(ALL_CHARACTERS));

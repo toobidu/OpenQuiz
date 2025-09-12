@@ -1,16 +1,10 @@
 package com.example.quizizz.controller;
 
-import com.example.quizizz.enums.MessageCode;
-import com.example.quizizz.model.dto.authentication.LoginRequest;
-import com.example.quizizz.model.dto.authentication.LoginResponse;
-import com.example.quizizz.model.dto.authentication.RegisterRequest;
-import com.example.quizizz.model.dto.authentication.RegisterResponse;
-import com.example.quizizz.model.dto.authentication.ResetPasswordRequest;
-import com.example.quizizz.model.dto.authentication.ResetPasswordResponse;
 import com.example.quizizz.config.ApiResponse;
-import com.example.quizizz.service.Interface.IAuthService;
+import com.example.quizizz.enums.MessageCode;
+import com.example.quizizz.model.dto.authentication.*;
 import com.example.quizizz.security.JwtUtil;
-
+import com.example.quizizz.service.Interface.IAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final IAuthService authService;
-    private final JwtUtil jwtUtil;
+//    private final JwtUtil jwtUtil;
 
     @Operation(summary = "Đăng ký tài khoản", description = "Đăng ký tài khoản mới cho người dùng")
     @PostMapping("/register")
