@@ -1,10 +1,10 @@
 package com.example.quizizz.controller;
 
-import com.example.quizizz.enums.MessageCode;
+import com.example.quizizz.common.constants.MessageCode;
 import com.example.quizizz.model.dto.role.CreateRoleRequest;
 import com.example.quizizz.model.dto.role.UpdateRoleRequest;
 import com.example.quizizz.model.dto.role.RoleResponse;
-import com.example.quizizz.config.ApiResponse;
+import com.example.quizizz.common.config.ApiResponse;
 import com.example.quizizz.service.Interface.IRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

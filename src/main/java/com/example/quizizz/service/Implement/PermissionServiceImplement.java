@@ -8,8 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.quizizz.enums.MessageCode;
-import com.example.quizizz.exception.ApiException;
+import com.example.quizizz.common.constants.MessageCode;
+import com.example.quizizz.common.exception.ApiException;
 import com.example.quizizz.mapper.PermissionMapper;
 import com.example.quizizz.model.dto.permission.CreatePermissionRequest;
 import com.example.quizizz.model.dto.permission.PermissionResponse;

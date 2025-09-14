@@ -1,7 +1,7 @@
 package com.example.quizizz.controller;
 
-import com.example.quizizz.config.ApiResponse;
-import com.example.quizizz.enums.MessageCode;
+import com.example.quizizz.common.config.ApiResponse;
+import com.example.quizizz.common.constants.MessageCode;
 import com.example.quizizz.model.dto.topic.CreateTopicRequest;
 import com.example.quizizz.model.dto.topic.TopicResponse;
 import com.example.quizizz.model.dto.topic.UpdateTopicRequest;

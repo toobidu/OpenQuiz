@@ -1,6 +1,6 @@
 package com.example.quizizz.model.dto.room;
 
-import com.example.quizizz.enums.RoomMode;
+import com.example.quizizz.common.constants.RoomMode;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;

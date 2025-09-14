@@ -1,4 +1,4 @@
-package com.example.quizizz.config;
+package com.example.quizizz.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +21,9 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.setAllowedOrigins(Arrays.asList(
-                "http://localhost:5173", // Frontend dev
+                "http://localhost:3000", // React dev server
+                "http://localhost:5173", // Vite dev server
+                "http://localhost:9000", // MinIO console
                 "https://your-production-domain.com" // Production domain
         ));
         config.setAllowedHeaders(Arrays.asList(

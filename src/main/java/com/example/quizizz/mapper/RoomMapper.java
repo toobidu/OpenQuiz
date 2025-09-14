@@ -4,7 +4,7 @@ import com.example.quizizz.model.dto.room.CreateRoomRequest;
 import com.example.quizizz.model.dto.room.RoomResponse;
 import com.example.quizizz.model.dto.room.UpdateRoomRequest;
 import com.example.quizizz.model.entity.Room;
-import com.example.quizizz.enums.RoomStatus;
+import com.example.quizizz.common.constants.RoomStatus;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
@@ -16,11 +16,11 @@ public interface RoomMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "roomMode", expression = "java(request.getRoomMode().name())")
-    @Mapping(target = "status", expression = "java(com.example.quizizz.enums.RoomStatus.WAITING.name())")
+    @Mapping(target = "status", expression = "java(com.example.quizizz.common.constants.RoomStatus.WAITING.name())")
     Room toEntity(CreateRoomRequest request);
     
-    @Mapping(target = "roomMode", expression = "java(com.example.quizizz.enums.RoomMode.valueOf(room.getRoomMode()))")
-    @Mapping(target = "status", expression = "java(com.example.quizizz.enums.RoomStatus.valueOf(room.getStatus()))")
+    @Mapping(target = "roomMode", expression = "java(com.example.quizizz.common.constants.RoomMode.valueOf(room.getRoomMode()))")
+    @Mapping(target = "status", expression = "java(com.example.quizizz.common.constants.RoomStatus.valueOf(room.getStatus()))")
     @Mapping(target = "topicName", ignore = true)
     @Mapping(target = "ownerUsername", ignore = true)
     @Mapping(target = "currentPlayers", ignore = true)

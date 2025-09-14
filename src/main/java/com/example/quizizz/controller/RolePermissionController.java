@@ -1,9 +1,10 @@
 package com.example.quizizz.controller;
 
-import com.example.quizizz.enums.MessageCode;
+import com.example.quizizz.common.config.ApiResponse;
+import com.example.quizizz.common.constants.MessageCode;
 import com.example.quizizz.model.dto.role.AssignPermissionsToRoleRequest;
 import com.example.quizizz.model.dto.permission.AssignRolesToPermissionRequest;
-import com.example.quizizz.config.ApiResponse;
+
 import com.example.quizizz.service.Interface.IRolePermissionService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,7 +46,7 @@ public class RolePermissionController {
         rolePermissionService.assignRolesToPermission(request);
         return ResponseEntity.ok(ApiResponse.success(MessageCode.ROLE_ASSIGNED, "Roles assigned to permission successfully"));
     }
-    
+
     @Operation(summary = "Xóa role khỏi permission", description = "Xóa một hoặc nhiều role khỏi một permission")
     @DeleteMapping("/remove-roles-from-permission")
     @PreAuthorize("hasAuthority('user:manage')")

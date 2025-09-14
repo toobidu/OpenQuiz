@@ -1,15 +1,15 @@
 package com.example.quizizz.service.Implement;
 
-import com.example.quizizz.enums.MessageCode;
-import com.example.quizizz.enums.RoomMode;
-import com.example.quizizz.enums.RoomStatus;
-import com.example.quizizz.exception.ApiException;
+import com.example.quizizz.common.constants.MessageCode;
+import com.example.quizizz.common.constants.RoomMode;
+import com.example.quizizz.common.constants.RoomStatus;
+import com.example.quizizz.common.exception.ApiException;
 import com.example.quizizz.mapper.RoomMapper;
 import com.example.quizizz.model.dto.room.*;
 import com.example.quizizz.model.entity.*;
 import com.example.quizizz.repository.*;
 import com.example.quizizz.service.Interface.IRoomService;
-import com.example.quizizz.service.Interface.IInvitationService;
+
 import com.example.quizizz.util.RoomCodeGenerator;
 import com.example.quizizz.mapper.RoomPlayerMapper;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ public class RoomServiceImplement implements IRoomService {
     private final RoomRepository roomRepository;
     private final RoomPlayerRepository roomPlayerRepository;
     private final UserRepository userRepository;
-    private final IInvitationService invitationService;
+
     private final RoomMapper roomMapper;
     private final RoomPlayerMapper roomPlayerMapper;
     private final RoomCodeGenerator roomCodeGenerator;
@@ -124,7 +124,13 @@ public class RoomServiceImplement implements IRoomService {
 
         List<RoomPlayers> players = roomPlayerRepository.findByRoomIdOrderByJoinOrder(roomId);
         return players.stream()
-                .map(roomPlayerMapper::toResponse)
+                .map(player -> {
+                    User user = userRepository.findById(player.getUserId())
+                            .orElse(null);
+                    return user != null ? 
+                            roomPlayerMapper.toResponse(player, user) : 
+                            roomPlayerMapper.toResponse(player);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -158,13 +164,15 @@ public class RoomServiceImplement implements IRoomService {
 
     @Override
     public RoomResponse respondToInvitation(Long invitationId, boolean accept, Long userId) {
-        return invitationService.respondToInvitation(invitationId.toString(), accept, userId);
+        // TODO: Implement invitation logic later
+        throw new ApiException(MessageCode.NOT_IMPLEMENTED);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<InvitationResponse> getUserInvitations(Long userId) {
-        return invitationService.getUserInvitations(userId);
+        // TODO: Implement invitation logic later
+        return List.of();
     }
 
     private void handleHostLeaving(Room room) {

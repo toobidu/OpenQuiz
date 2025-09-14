@@ -1,7 +1,7 @@
 package com.example.quizizz.controller.custom;
 
-import com.example.quizizz.config.ApiResponse;
-import com.example.quizizz.enums.MessageCode;
+import com.example.quizizz.common.config.ApiResponse;
+import com.example.quizizz.common.constants.MessageCode;
 import com.example.quizizz.model.dto.room.*;
 import com.example.quizizz.service.Interface.IRoomService;
 import com.example.quizizz.security.JwtUtil;

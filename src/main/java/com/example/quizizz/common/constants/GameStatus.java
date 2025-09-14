@@ -1,4 +1,4 @@
-package com.example.quizizz.enums;
+package com.example.quizizz.common.constants;
 
 public enum GameStatus {
     WAITING,

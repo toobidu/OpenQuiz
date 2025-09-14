@@ -1,4 +1,4 @@
-package com.example.quizizz.config;
+package com.example.quizizz.common.config;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;

@@ -1,6 +1,6 @@
-package com.example.quizizz.exception;
+package com.example.quizizz.common.exception;
 
-import com.example.quizizz.enums.MessageCode;
+import com.example.quizizz.common.constants.MessageCode;
 
 public class ApiException extends RuntimeException {
     private final int status;

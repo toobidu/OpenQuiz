@@ -1,8 +1,8 @@
 package com.example.quizizz.service.Implement;
 
-import com.example.quizizz.enums.MessageCode;
-import com.example.quizizz.enums.PermissionCode;
-import com.example.quizizz.exception.ApiException;
+import com.example.quizizz.common.constants.MessageCode;
+import com.example.quizizz.common.constants.PermissionCode;
+import com.example.quizizz.common.exception.ApiException;
 import com.example.quizizz.model.dto.role.AssignPermissionsToRoleRequest;
 import com.example.quizizz.model.dto.permission.AssignRolesToPermissionRequest;
 import com.example.quizizz.model.entity.Permission;

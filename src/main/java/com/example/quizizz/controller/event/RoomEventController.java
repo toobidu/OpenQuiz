@@ -3,6 +3,7 @@ package com.example.quizizz.controller.event;
 import com.example.quizizz.model.dto.room.*;
 import com.example.quizizz.service.Interface.IRoomService;
 import com.example.quizizz.security.JwtUtil;
+import com.example.quizizz.common.config.WebSocketEventListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -30,6 +31,7 @@ public class RoomEventController {
     private final IRoomService roomService;
     private final JwtUtil jwtUtil;
     private final SimpMessagingTemplate messagingTemplate;
+    private final WebSocketEventListener webSocketEventListener;
 
     /**
      * Xử lý sự kiện join phòng qua WebSocket
@@ -47,21 +49,24 @@ public class RoomEventController {
             /** Lấy user ID từ JWT token */
             String token = (String) headerAccessor.getSessionAttributes().get("token");
             String username = jwtUtil.getUsernameFromToken(token);
-            Long userId = Long.parseLong(username); // Assuming username is userId for simplicity
+            Long userId = Long.parseLong(username);
             
             log.info("WebSocket: User {} joining room {}", userId, roomId);
             
             /** Gọi service để join phòng */
             RoomResponse roomResponse = roomService.joinRoom(request, userId);
             
-            /** Tạo response event */
+            /** Track session for disconnect handling */
+            webSocketEventListener.addUserToRoom(headerAccessor.getSessionId(), roomId);
+            
+            /** Tạo response event theo format yêu cầu */
             Map<String, Object> response = new HashMap<>();
-            response.put("type", "PLAYER_JOINED");
-            response.put("roomId", roomId);
-            response.put("playerId", userId);
-            response.put("room", roomResponse);
+            response.put("event", "JOIN_ROOM");
+            response.put("data", Map.of(
+                "userId", userId,
+                "username", username
+            ));
             response.put("timestamp", LocalDateTime.now());
-            response.put("success", true);
             
             return response;
             
@@ -69,11 +74,12 @@ public class RoomEventController {
             log.error("Error joining room via WebSocket: ", e);
             
             Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("type", "JOIN_ERROR");
-            errorResponse.put("roomId", roomId);
-            errorResponse.put("error", e.getMessage());
+            errorResponse.put("event", "JOIN_ROOM_ERROR");
+            errorResponse.put("data", Map.of(
+                "error", e.getMessage(),
+                "roomId", roomId
+            ));
             errorResponse.put("timestamp", LocalDateTime.now());
-            errorResponse.put("success", false);
             
             return errorResponse;
         }
@@ -101,13 +107,17 @@ public class RoomEventController {
             /** Gọi service để leave phòng */
             roomService.leaveRoom(roomId, userId);
             
-            /** Tạo response event */
+            /** Remove session tracking */
+            webSocketEventListener.removeUserFromRoom(headerAccessor.getSessionId());
+            
+            /** Tạo response event theo format yêu cầu */
             Map<String, Object> response = new HashMap<>();
-            response.put("type", "PLAYER_LEFT");
-            response.put("roomId", roomId);
-            response.put("playerId", userId);
+            response.put("event", "LEAVE_ROOM");
+            response.put("data", Map.of(
+                "userId", userId,
+                "username", username
+            ));
             response.put("timestamp", LocalDateTime.now());
-            response.put("success", true);
             
             return response;
             
@@ -115,11 +125,12 @@ public class RoomEventController {
             log.error("Error leaving room via WebSocket: ", e);
             
             Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("type", "LEAVE_ERROR");
-            errorResponse.put("roomId", roomId);
-            errorResponse.put("error", e.getMessage());
+            errorResponse.put("event", "LEAVE_ROOM_ERROR");
+            errorResponse.put("data", Map.of(
+                "error", e.getMessage(),
+                "roomId", roomId
+            ));
             errorResponse.put("timestamp", LocalDateTime.now());
-            errorResponse.put("success", false);
             
             return errorResponse;
         }

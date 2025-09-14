@@ -1,8 +1,8 @@
 package com.example.quizizz.service.Implement;
 
-import com.example.quizizz.enums.GameStatus;
-import com.example.quizizz.enums.PermissionCode;
-import com.example.quizizz.enums.RedisKeyPrefix;
+import com.example.quizizz.common.constants.GameStatus;
+import com.example.quizizz.common.constants.PermissionCode;
+import com.example.quizizz.common.constants.RedisKeyPrefix;
 import com.example.quizizz.service.Interface.IRedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;

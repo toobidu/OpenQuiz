@@ -1,7 +1,7 @@
 package com.example.quizizz.model.dto.room;
 
-import com.example.quizizz.enums.RoomMode;
-import com.example.quizizz.enums.RoomStatus;
+import com.example.quizizz.common.constants.RoomMode;
+import com.example.quizizz.common.constants.RoomStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

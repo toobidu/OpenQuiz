@@ -1,4 +1,4 @@
-package com.example.quizizz.config;
+package com.example.quizizz.common.config;
 
 import com.example.quizizz.security.JwtUtil;
 import lombok.RequiredArgsConstructor;

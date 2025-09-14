@@ -1,6 +1,6 @@
 package com.example.quizizz.service.Interface;
 
-import com.example.quizizz.enums.RoomStatus;
+import com.example.quizizz.common.constants.RoomStatus;
 import com.example.quizizz.model.dto.room.*;
 import java.util.List;
 

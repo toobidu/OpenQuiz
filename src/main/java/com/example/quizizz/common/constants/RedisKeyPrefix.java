@@ -1,4 +1,4 @@
-package com.example.quizizz.enums;
+package com.example.quizizz.common.constants;
 
 public enum RedisKeyPrefix {
     USER_PERMISSIONS("user:%s:permissions"),

@@ -1,6 +1,6 @@
 package com.example.quizizz.repository;
 
-import com.example.quizizz.enums.RoomStatus;
+import com.example.quizizz.common.constants.RoomStatus;
 import com.example.quizizz.model.entity.Room;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

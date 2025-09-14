@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.quizizz.enums.RedisKeyPrefix;
+import com.example.quizizz.common.constants.RedisKeyPrefix;
 import com.example.quizizz.mapper.ProfileMapper;
 import com.example.quizizz.model.dto.profile.UpdateAvatarResponse;
 import com.example.quizizz.model.dto.profile.UpdateProfileRequest;
@@ -91,17 +91,19 @@ public class ProfileServiceImplement implements IProfileService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new NoSuchElementException("User not found with id: " + userId));
         
-        // Upload file mới và lưu full URL vào DB
-        String avatarUrl = fileStorageService.uploadAvatar(file, userId);
-        user.setAvatarURL(avatarUrl);
+        // Upload file mới và lưu tên file vào DB
+        String fileName = fileStorageService.uploadAvatar(file, userId);
+        user.setAvatarURL(fileName); // Lưu tên file thay vì URL
         userRepository.save(user);
         
         // Xóa cache profile để reload lại
         String cacheKey = RedisKeyPrefix.USER_PROFILE.format(userId);
         redisService.deleteKey(cacheKey);
         
+        // Tạo presigned URL mới cho response
+        String presignedUrl = fileStorageService.getAvatarUrl(fileName);
         UpdateAvatarResponse response = new UpdateAvatarResponse();
-        response.setAvatarURL(avatarUrl);
+        response.setAvatarURL(presignedUrl);
         return response;
     }
 
@@ -116,6 +118,21 @@ public class ProfileServiceImplement implements IProfileService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new NoSuchElementException("User not found with id: " + userId));
         
-        return user.getAvatarURL(); // Trả về URL đã lưu trong DB
+        String avatarURL = user.getAvatarURL();
+        if (avatarURL == null || avatarURL.isEmpty()) {
+            return null;
+        }
+        
+        // Tạo presigned URL mới để đảm bảo không hết hạn
+        String fileName = extractFileNameFromUrl(avatarURL);
+        return fileStorageService.getAvatarUrl(fileName);
+    }
+    
+    private String extractFileNameFromUrl(String url) {
+        if (url == null) return null;
+        // Extract filename from MinIO URL (before query parameters)
+        String[] parts = url.split("/");
+        String fileNameWithParams = parts[parts.length - 1];
+        return fileNameWithParams.split("\\?")[0]; // Remove query parameters
     }
 }

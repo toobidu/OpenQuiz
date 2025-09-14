@@ -1,4 +1,4 @@
-package com.example.quizizz.enums;
+package com.example.quizizz.common.constants;
 
 public enum PermissionCode {
     USER_MANAGE("user:manage"),
@@ -26,5 +26,4 @@ public enum PermissionCode {
     public String getCode() {
         return code;
     }
-    
 }

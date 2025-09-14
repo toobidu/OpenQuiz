@@ -8,8 +8,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.quizizz.config.ApiResponse;
-import com.example.quizizz.enums.MessageCode;
+import com.example.quizizz.common.config.ApiResponse;
+import com.example.quizizz.common.constants.MessageCode;
 import com.example.quizizz.model.dto.profile.UpdateAvatarResponse;
 import com.example.quizizz.model.dto.profile.UpdateProfileRequest;
 import com.example.quizizz.model.dto.profile.UpdateProfileResponse;
@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/profile")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 @Tag(name = "Profile", description = "APIs liên quan đến hồ sơ người dùng")
 public class ProfileController {
 

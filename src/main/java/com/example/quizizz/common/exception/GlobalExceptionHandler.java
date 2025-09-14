@@ -1,7 +1,7 @@
-package com.example.quizizz.exception;
+package com.example.quizizz.common.exception;
 
-import com.example.quizizz.config.ApiResponse;
-import com.example.quizizz.enums.MessageCode;
+import com.example.quizizz.common.config.ApiResponse;
+import com.example.quizizz.common.constants.MessageCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;

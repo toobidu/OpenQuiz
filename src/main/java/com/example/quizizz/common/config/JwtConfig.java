@@ -1,4 +1,4 @@
-package com.example.quizizz.config;
+package com.example.quizizz.common.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

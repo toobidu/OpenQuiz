@@ -1,10 +1,10 @@
 package com.example.quizizz.controller;
 
-import com.example.quizizz.enums.MessageCode;
+import com.example.quizizz.common.constants.MessageCode;
 import com.example.quizizz.model.dto.permission.CreatePermissionRequest;
 import com.example.quizizz.model.dto.permission.PermissionResponse;
 import com.example.quizizz.model.dto.permission.UpdatePermissionRequest;
-import com.example.quizizz.config.ApiResponse;
+import com.example.quizizz.common.config.ApiResponse;
 import com.example.quizizz.service.Interface.IPermissionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

@@ -14,7 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.example.quizizz.enums.PermissionCode;
+import com.example.quizizz.common.constants.PermissionCode;
 import com.example.quizizz.service.Interface.IRedisService;
 
 import jakarta.servlet.FilterChain;

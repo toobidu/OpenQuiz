@@ -1,6 +1,6 @@
 package com.example.quizizz.security;
 
-import com.example.quizizz.config.JwtConfig;
+import com.example.quizizz.common.config.JwtConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;

@@ -4,15 +4,16 @@ import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.example.quizizz.common.constants.PermissionCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.quizizz.enums.MessageCode;
-import com.example.quizizz.enums.RoleCode;
-import com.example.quizizz.enums.SystemFlag;
-import com.example.quizizz.exception.ApiException;
+import com.example.quizizz.common.constants.MessageCode;
+import com.example.quizizz.common.constants.RoleCode;
+import com.example.quizizz.common.constants.SystemFlag;
+import com.example.quizizz.common.exception.ApiException;
 import com.example.quizizz.mapper.UserMapper;
 import com.example.quizizz.model.dto.authentication.LoginRequest;
 import com.example.quizizz.model.dto.authentication.LoginResponse;
@@ -226,9 +227,9 @@ public class AuthServiceImplement implements IAuthService {
                     .collect(Collectors.toSet());
 
             // Chuyển từ code sang enum PermissionCode
-            Set<com.example.quizizz.enums.PermissionCode> permissionCodes = permissionNames.stream()
+            Set<PermissionCode> permissionCodes = permissionNames.stream()
                     .map(code -> {
-                        for (com.example.quizizz.enums.PermissionCode p : com.example.quizizz.enums.PermissionCode.values()) {
+                        for (PermissionCode p : PermissionCode.values()) {
                             if (p.getCode().equals(code)) return p;
                         }
                         return null;

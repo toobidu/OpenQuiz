@@ -9,7 +9,7 @@ import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
-    @Mapping(target = "typeAccount", expression = "java(com.example.quizizz.enums.RoleCode.PLAYER.name())")
+    @Mapping(target = "typeAccount", expression = "java(com.example.quizizz.common.constants.RoleCode.PLAYER.name())")
     @Mapping(target = "online", constant = "false")
     @Mapping(target = "deleted", ignore = true)
     @Mapping(target = "id", ignore = true)

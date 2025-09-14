@@ -1,7 +1,7 @@
 package com.example.quizizz.service.Interface;
 
-import com.example.quizizz.enums.PermissionCode;
-import com.example.quizizz.enums.GameStatus;
+import com.example.quizizz.common.constants.PermissionCode;
+import com.example.quizizz.common.constants.GameStatus;
 
 import java.util.Map;
 import java.util.Set;

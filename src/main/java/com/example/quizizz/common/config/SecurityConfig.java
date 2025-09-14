@@ -1,4 +1,4 @@
-package com.example.quizizz.config;
+package com.example.quizizz.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,7 +48,7 @@ public class SecurityConfig {
                 )
                 // Thêm JWT filter
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        
+
         return http.build();
     }
 
