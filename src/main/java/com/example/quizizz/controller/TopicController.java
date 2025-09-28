@@ -81,7 +81,6 @@ public class TopicController {
      */
     @Operation(summary = "Lấy tất cả chủ đề", description = "Lấy danh sách tất cả chủ đề trong hệ thống")
     @GetMapping
-    @PreAuthorize("hasAuthority('topic:manage')")
     public ResponseEntity<ApiResponse<List<TopicResponse>>> getAll() {
         List<TopicResponse> response = topicService.getAll();
         return ResponseEntity.ok(ApiResponse.success(response));

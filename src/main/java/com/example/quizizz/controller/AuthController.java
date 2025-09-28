@@ -3,6 +3,7 @@ package com.example.quizizz.controller;
 import com.example.quizizz.common.config.ApiResponse;
 import com.example.quizizz.common.constants.MessageCode;
 import com.example.quizizz.model.dto.authentication.*;
+import org.springframework.security.core.Authentication;
 import com.example.quizizz.security.JwtUtil;
 import com.example.quizizz.service.Interface.IAuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,5 +56,15 @@ public class AuthController {
     public ResponseEntity<ApiResponse<ResetPasswordResponse>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         ResetPasswordResponse response = authService.resetPassword(request);
         return ResponseEntity.ok(ApiResponse.success(MessageCode.AUTH_PASSWORD_RESET_SUCCESS, response));
+    }
+
+    @Operation(summary = "Đổi mật khẩu", description = "Đổi mật khẩu cho người dùng hiện tại")
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<ChangePasswordResponse>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request, 
+            Authentication auth) {
+        Long userId = Long.valueOf(auth.getName());
+        ChangePasswordResponse response = authService.changePassword(userId, request);
+        return ResponseEntity.ok(ApiResponse.success(MessageCode.AUTH_PASSWORD_CHANGED, response));
     }
 }

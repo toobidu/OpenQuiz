@@ -6,6 +6,9 @@ import com.example.quizizz.common.constants.RoomStatus;
 import com.example.quizizz.common.exception.ApiException;
 import com.example.quizizz.mapper.RoomMapper;
 import com.example.quizizz.model.dto.room.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.example.quizizz.model.entity.*;
 import com.example.quizizz.repository.*;
 import com.example.quizizz.service.Interface.IRoomService;
@@ -37,7 +40,6 @@ public class RoomServiceImplement implements IRoomService {
     private final RoomMapper roomMapper;
     private final RoomPlayerMapper roomPlayerMapper;
     private final RoomCodeGenerator roomCodeGenerator;
-    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     public RoomResponse createRoom(CreateRoomRequest request, Long userId) {
@@ -333,6 +335,48 @@ public class RoomServiceImplement implements IRoomService {
         if (roomMode == RoomMode.BATTLE_ROYAL && maxPlayers != null && (maxPlayers < 3 || maxPlayers > 50)) {
             throw new ApiException(MessageCode.ROOM_INVALID_MAX_PLAYERS);
         }
+    }
+
+    @Override
+    public PagedRoomResponse getPublicRoomsWithPagination(RoomStatus status, int page, int size, String search) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Room> roomPage;
+        
+        if (search != null && !search.trim().isEmpty()) {
+            roomPage = roomRepository.findPublicRoomsByStatusAndSearch(status, search.trim(), pageable);
+        } else {
+            roomPage = roomRepository.findPublicRoomsByStatusWithPagination(status, pageable);
+        }
+        
+        return mapToPagedResponse(roomPage);
+    }
+
+    @Override
+    public PagedRoomResponse getMyRoomsWithPagination(Long userId, int page, int size, String search) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Room> roomPage;
+        
+        if (search != null && !search.trim().isEmpty()) {
+            roomPage = roomRepository.findByOwnerIdAndSearch(userId, search.trim(), pageable);
+        } else {
+            roomPage = roomRepository.findByOwnerIdWithPagination(userId, pageable);
+        }
+        
+        return mapToPagedResponse(roomPage);
+    }
+
+    private PagedRoomResponse mapToPagedResponse(Page<Room> roomPage) {
+        PagedRoomResponse response = new PagedRoomResponse();
+        response.setRooms(roomPage.getContent().stream()
+                .map(roomMapper::toResponse)
+                .collect(Collectors.toList()));
+        response.setCurrentPage(roomPage.getNumber());
+        response.setTotalPages(roomPage.getTotalPages());
+        response.setTotalElements(roomPage.getTotalElements());
+        response.setPageSize(roomPage.getSize());
+        response.setHasNext(roomPage.hasNext());
+        response.setHasPrevious(roomPage.hasPrevious());
+        return response;
     }
 
     private String generateUniqueRoomCode() {

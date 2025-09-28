@@ -2,6 +2,8 @@ package com.example.quizizz.repository;
 
 import com.example.quizizz.common.constants.RoomStatus;
 import com.example.quizizz.model.entity.Room;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -53,4 +55,28 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
      */
     @Query("SELECT r FROM Room r WHERE r.isPrivate = false AND r.status = 'WAITING' ORDER BY r.createdAt DESC")
     List<Room> findPublicWaitingRooms();
+    
+    /**
+     * Lấy danh sách phòng public theo trạng thái có phân trang
+     */
+    @Query("SELECT r FROM Room r WHERE r.isPrivate = false AND r.status = :status AND r.status != 'ARCHIVED' ORDER BY r.createdAt DESC")
+    Page<Room> findPublicRoomsByStatusWithPagination(@Param("status") RoomStatus status, Pageable pageable);
+    
+    /**
+     * Tìm kiếm phòng public theo trạng thái và tên có phân trang
+     */
+    @Query("SELECT r FROM Room r WHERE r.isPrivate = false AND r.status = :status AND r.status != 'ARCHIVED' AND r.roomName LIKE %:search% ORDER BY r.createdAt DESC")
+    Page<Room> findPublicRoomsByStatusAndSearch(@Param("status") RoomStatus status, @Param("search") String search, Pageable pageable);
+    
+    /**
+     * Lấy danh sách phòng của owner có phân trang
+     */
+    @Query("SELECT r FROM Room r WHERE r.ownerId = :ownerId ORDER BY r.createdAt DESC")
+    Page<Room> findByOwnerIdWithPagination(@Param("ownerId") Long ownerId, Pageable pageable);
+    
+    /**
+     * Tìm kiếm phòng của owner theo tên có phân trang
+     */
+    @Query("SELECT r FROM Room r WHERE r.ownerId = :ownerId AND r.roomName LIKE %:search% ORDER BY r.createdAt DESC")
+    Page<Room> findByOwnerIdAndSearch(@Param("ownerId") Long ownerId, @Param("search") String search, Pageable pageable);
 }

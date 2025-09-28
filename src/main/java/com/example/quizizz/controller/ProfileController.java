@@ -88,4 +88,24 @@ public class ProfileController {
             return ResponseEntity.internalServerError().body(ApiResponse.error(500, MessageCode.INTERNAL_SERVER_ERROR, "Lỗi lấy avatar: " + e.getMessage()));
         }
     }
+    
+    @GetMapping("/search")
+    @Operation(summary = "Tìm kiếm người dùng", description = "Tìm kiếm người dùng theo username hoặc tên")
+    public ResponseEntity<ApiResponse<java.util.List<com.example.quizizz.model.dto.profile.UserSearchResponse>>> searchUsers(
+            @RequestParam String keyword) {
+        java.util.List<com.example.quizizz.model.dto.profile.UserSearchResponse> users = profileService.searchUsers(keyword);
+        return ResponseEntity.ok(ApiResponse.success(users));
+    }
+    
+    @GetMapping("/public/{username}")
+    @Operation(summary = "Xem hồ sơ công khai", description = "Xem thông tin công khai của người dùng khác")
+    public ResponseEntity<ApiResponse<com.example.quizizz.model.dto.profile.PublicProfileResponse>> getPublicProfile(
+            @PathVariable String username) {
+        try {
+            com.example.quizizz.model.dto.profile.PublicProfileResponse profile = profileService.getPublicProfile(username);
+            return ResponseEntity.ok(ApiResponse.success(profile));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(404, MessageCode.USER_NOT_FOUND, "Không tìm thấy người dùng: " + username));
+        }
+    }
 }

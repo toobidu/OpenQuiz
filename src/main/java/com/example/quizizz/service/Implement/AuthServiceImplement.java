@@ -15,6 +15,8 @@ import com.example.quizizz.common.constants.RoleCode;
 import com.example.quizizz.common.constants.SystemFlag;
 import com.example.quizizz.common.exception.ApiException;
 import com.example.quizizz.mapper.UserMapper;
+import com.example.quizizz.model.dto.authentication.ChangePasswordRequest;
+import com.example.quizizz.model.dto.authentication.ChangePasswordResponse;
 import com.example.quizizz.model.dto.authentication.LoginRequest;
 import com.example.quizizz.model.dto.authentication.LoginResponse;
 import com.example.quizizz.model.dto.authentication.RegisterRequest;
@@ -185,6 +187,32 @@ public class AuthServiceImplement implements IAuthService {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     MessageCode.AUTH_PASSWORD_RESET_FAILED, "Password reset failed");
         }
+    }
+
+    @Override
+    public ChangePasswordResponse changePassword(Long userId, ChangePasswordRequest request) {
+        // Validate new password and confirm password match
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST.value(), 
+                    MessageCode.AUTH_PASSWORD_MISMATCH, "New password and confirm password do not match");
+        }
+
+        // Find user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND.value(), 
+                        MessageCode.USER_NOT_FOUND, "User not found"));
+
+        // Verify current password
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST.value(), 
+                    MessageCode.AUTH_PASSWORD_INCORRECT, "Current password is incorrect");
+        }
+
+        // Update password
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        return new ChangePasswordResponse("Password changed successfully", user.getUsername());
     }
 
     @Override
