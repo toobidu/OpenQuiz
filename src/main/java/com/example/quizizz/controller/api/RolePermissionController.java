@@ -1,4 +1,4 @@
-package com.example.quizizz.controller;
+package com.example.quizizz.controller.api;
 
 import com.example.quizizz.common.config.ApiResponse;
 import com.example.quizizz.common.constants.MessageCode;

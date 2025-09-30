@@ -365,6 +365,66 @@ public class RoomServiceImplement implements IRoomService {
         return mapToPagedResponse(roomPage);
     }
 
+    @Override
+    public PagedRoomResponse getAllRoomsWithPagination(RoomStatus status, int page, int size, String search) {
+        // Tạm thời return public rooms, cần implement query cho all rooms
+        return getPublicRoomsWithPagination(status, page, size, search);
+    }
+
+    @Override
+    public RoomResponse joinRoomById(Long roomId, Long userId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ApiException(MessageCode.ROOM_NOT_FOUND));
+
+        if (room.getIsPrivate()) {
+            throw new ApiException(MessageCode.ROOM_PERMISSION_DENIED);
+        }
+
+        if (!room.getStatus().equals(RoomStatus.WAITING.name())) {
+            throw new ApiException(MessageCode.ROOM_ALREADY_STARTED);
+        }
+
+        Integer currentPlayers = roomPlayerRepository.countPlayersInRoom(room.getId());
+        if (currentPlayers >= room.getMaxPlayers()) {
+            throw new ApiException(MessageCode.ROOM_FULL);
+        }
+
+        if (roomPlayerRepository.existsByRoomIdAndUserId(room.getId(), userId)) {
+            throw new ApiException(MessageCode.ROOM_ALREADY_JOINED);
+        }
+
+        Integer nextJoinOrder = roomPlayerRepository.getMaxJoinOrderInRoom(room.getId()) + 1;
+
+        RoomPlayers player = new RoomPlayers();
+        player.setRoomId(room.getId());
+        player.setUserId(userId);
+        player.setIsHost(false);
+        player.setJoinOrder(nextJoinOrder);
+        player.setStatus("ACTIVE");
+        roomPlayerRepository.save(player);
+
+        return roomMapper.toResponse(room);
+    }
+
+    @Override
+    public List<RoomResponse> searchRooms(String query, RoomStatus status) {
+        // Tạm thời search trong public rooms
+        List<Room> rooms = roomRepository.findPublicRoomsByRoomNameContaining(query);
+        return rooms.stream()
+                .filter(room -> room.getStatus().equals(status.name()))
+                .map(roomMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<RoomResponse> quickSearchRooms(String query) {
+        List<Room> rooms = roomRepository.findPublicRoomsByRoomNameContaining(query);
+        return rooms.stream()
+                .limit(10)
+                .map(roomMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
     private PagedRoomResponse mapToPagedResponse(Page<Room> roomPage) {
         PagedRoomResponse response = new PagedRoomResponse();
         response.setRooms(roomPage.getContent().stream()

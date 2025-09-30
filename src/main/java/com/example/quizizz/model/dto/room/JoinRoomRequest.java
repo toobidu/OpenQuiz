@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class JoinRoomRequest {
-
     @NotBlank(message = "Room code is required")
     private String roomCode;
 }

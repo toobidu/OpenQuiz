@@ -34,6 +34,7 @@ import com.example.quizizz.service.Interface.IAuthService;
 import com.example.quizizz.service.Interface.IRedisService;
 import com.example.quizizz.service.Interface.IEmailService;
 import com.example.quizizz.util.PasswordGenerator;
+import com.example.quizizz.common.config.JwtConfig;
 
 import lombok.RequiredArgsConstructor;
 
@@ -52,6 +53,7 @@ public class AuthServiceImplement implements IAuthService {
     private final PermissionRepository permissionRepository;
     private final IEmailService emailService;
     private final PasswordGenerator passwordGenerator;
+    private final JwtConfig jwtConfig;
 
     @Override
     public RegisterResponse register(RegisterRequest request) {
@@ -117,8 +119,9 @@ public class AuthServiceImplement implements IAuthService {
             userRepository.save(user);
             redisService.setUserOffline(userId);
 
-            long expiration = jwtUtil.getClaimFromToken(token, claims -> claims.getExpiration()).getTime();
-            redisService.addTokenToBlacklist(token, expiration);
+            // Lấy thời gian hết hạn của refresh token từ config
+            long refreshTokenExpiration = System.currentTimeMillis() + jwtConfig.getRefreshExpiration();
+            redisService.addTokenToBlacklistWithRefreshTTL(token, refreshTokenExpiration);
 
         } catch (Exception e) {
             throw new ApiException(HttpStatus.BAD_REQUEST.value(), MessageCode.AUTH_INVALID_TOKEN, "Invalid token");

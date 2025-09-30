@@ -286,9 +286,31 @@ public class RedisServiceImplement implements IRedisService {
     public void addTokenToBlacklist(String token, long expiration) {
         String key = RedisKeyPrefix.TOKEN_BLACKLIST.format(token);
         try {
-            redisTemplate.opsForValue().set(key, "blacklisted", expiration, TimeUnit.MILLISECONDS);
+            // Tính thời gian còn lại từ hiện tại đến khi token hết hạn
+            long currentTime = System.currentTimeMillis();
+            long remainingTime = expiration - currentTime;
+            
+            if (remainingTime > 0) {
+                redisTemplate.opsForValue().set(key, "blacklisted", remainingTime, TimeUnit.MILLISECONDS);
+            }
         } catch (Exception e) {
             throw new RuntimeException("Error adding token to blacklist", e);
+        }
+    }
+
+    @Override
+    public void addTokenToBlacklistWithRefreshTTL(String token, long refreshTokenExpiration) {
+        String key = RedisKeyPrefix.TOKEN_BLACKLIST.format(token);
+        try {
+            // Sử dụng thời gian hết hạn của refresh token làm TTL
+            long currentTime = System.currentTimeMillis();
+            long remainingTime = refreshTokenExpiration - currentTime;
+            
+            if (remainingTime > 0) {
+                redisTemplate.opsForValue().set(key, "blacklisted", remainingTime, TimeUnit.MILLISECONDS);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error adding token to blacklist with refresh TTL", e);
         }
     }
 

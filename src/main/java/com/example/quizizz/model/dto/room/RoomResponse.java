@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Data
@@ -25,7 +24,8 @@ public class RoomResponse {
     private RoomStatus status;
     private Integer maxPlayers;
     private Integer currentPlayers;
-    private Duration timeLimit;
+    private Integer questionCount;
+    private String questionType;
+    private Integer countdownTime;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

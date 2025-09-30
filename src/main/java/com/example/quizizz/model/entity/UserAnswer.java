@@ -1,22 +1,21 @@
 package com.example.quizizz.model.entity;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_answers")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserAnswer implements Serializable{
+public class UserAnswer implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,23 +26,23 @@ public class UserAnswer implements Serializable{
     @Column(name = "question_id", nullable = false)
     private Long questionId;
 
-    @Column(name = "room_id", nullable = false)
-    private Long roomId;
-
     @Column(name = "answer_id", nullable = false)
     private Long answerId;
 
+    @Column(name = "room_id")
+    private Long roomId;
+
+    @Column(name = "game_session_id")
+    private Long gameSessionId;
+
     @Column(name = "is_correct", nullable = false)
-    private boolean isCorrect;
+    private Boolean isCorrect;
 
     @Column(name = "score", nullable = false)
     private Integer score;
 
-    /**
-     * Tổng thời gian chơi tính bằng giây.
-     */
-    @Column(name = "time_taken", nullable = false)
-    private Integer timeTaken; 
+    @Column(name = "time_taken")
+    private Integer timeTaken;
 
     @Column(name = "created_at")
     @CreationTimestamp

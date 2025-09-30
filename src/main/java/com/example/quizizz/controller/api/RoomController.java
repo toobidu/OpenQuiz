@@ -1,4 +1,4 @@
-package com.example.quizizz.controller;
+package com.example.quizizz.controller.api;
 
 import com.example.quizizz.common.config.ApiResponse;
 import com.example.quizizz.common.constants.MessageCode;
@@ -54,6 +54,15 @@ public class RoomController {
         return ResponseEntity.ok(ApiResponse.success(roomResponse));
     }
 
+    @GetMapping("/quick-search")
+    @Operation(summary = "Tìm kiếm nhanh phòng theo room code hoặc tên phòng")
+    public ResponseEntity<ApiResponse<List<RoomResponse>>> quickSearchRooms(
+            @RequestParam String q) {
+        
+        List<RoomResponse> rooms = roomService.quickSearchRooms(q);
+        return ResponseEntity.ok(ApiResponse.success(rooms));
+    }
+
     @PutMapping("/{roomId}")
     @Operation(summary = "Cập nhật thông tin phòng")
     public ResponseEntity<ApiResponse<RoomResponse>> updateRoom(
@@ -99,6 +108,28 @@ public class RoomController {
         return ResponseEntity.ok(ApiResponse.success(rooms));
     }
 
+    @GetMapping("/all")
+    @Operation(summary = "Lấy tất cả phòng (public + private) có phân trang")
+    public ResponseEntity<ApiResponse<PagedRoomResponse>> getAllRooms(
+            @RequestParam(required = false, defaultValue = "WAITING") RoomStatus status,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "4") int size,
+            @RequestParam(required = false) String search) {
+        
+        PagedRoomResponse rooms = roomService.getAllRoomsWithPagination(status, page, size, search);
+        return ResponseEntity.ok(ApiResponse.success(rooms));
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Tìm kiếm phòng theo tên hoặc room code")
+    public ResponseEntity<ApiResponse<List<RoomResponse>>> searchRooms(
+            @RequestParam String query,
+            @RequestParam(required = false, defaultValue = "WAITING") RoomStatus status) {
+        
+        List<RoomResponse> rooms = roomService.searchRooms(query, status);
+        return ResponseEntity.ok(ApiResponse.success(rooms));
+    }
+
     @GetMapping("/my-rooms/paged")
     @Operation(summary = "Lấy danh sách phòng của user có phân trang")
     public ResponseEntity<ApiResponse<PagedRoomResponse>> getMyRoomsPaged(
@@ -120,6 +151,18 @@ public class RoomController {
         
         Long userId = getUserIdFromRequest(httpRequest);
         RoomResponse roomResponse = roomService.joinRoom(request, userId);
+        
+        return ResponseEntity.ok(ApiResponse.success(MessageCode.ROOM_JOINED, roomResponse));
+    }
+
+    @PostMapping("/{roomId}/join-direct")
+    @Operation(summary = "Join phòng public trực tiếp bằng room ID")
+    public ResponseEntity<ApiResponse<RoomResponse>> joinRoomDirect(
+            @PathVariable Long roomId,
+            HttpServletRequest httpRequest) {
+        
+        Long userId = getUserIdFromRequest(httpRequest);
+        RoomResponse roomResponse = roomService.joinRoomById(roomId, userId);
         
         return ResponseEntity.ok(ApiResponse.success(MessageCode.ROOM_JOINED, roomResponse));
     }

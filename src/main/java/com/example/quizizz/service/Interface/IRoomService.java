@@ -133,6 +133,39 @@ public interface IRoomService {
     PagedRoomResponse getPublicRoomsWithPagination(RoomStatus status, int page, int size, String search);
     
     /**
+     * Lấy tất cả phòng (public + private) có phân trang và tìm kiếm
+     * @param status trạng thái phòng
+     * @param page số trang (bắt đầu từ 0)
+     * @param size số phòng mỗi trang
+     * @param search từ khóa tìm kiếm
+     * @return kết quả phân trang
+     */
+    PagedRoomResponse getAllRoomsWithPagination(RoomStatus status, int page, int size, String search);
+    
+    /**
+     * Join phòng trực tiếp bằng room ID (cho phòng public)
+     * @param roomId ID phòng
+     * @param userId ID người join
+     * @return thông tin phòng
+     */
+    RoomResponse joinRoomById(Long roomId, Long userId);
+    
+    /**
+     * Tìm kiếm phòng theo tên hoặc room code
+     * @param query từ khóa tìm kiếm (tên phòng hoặc room code)
+     * @param status trạng thái phòng
+     * @return danh sách phòng
+     */
+    List<RoomResponse> searchRooms(String query, RoomStatus status);
+    
+    /**
+     * Tìm kiếm nhanh phòng (không filter status)
+     * @param query từ khóa tìm kiếm
+     * @return danh sách phòng (giới hạn 10 kết quả)
+     */
+    List<RoomResponse> quickSearchRooms(String query);
+    
+    /**
      * Lấy danh sách phòng của user có phân trang và tìm kiếm
      * @param userId ID user
      * @param page số trang (bắt đầu từ 0)

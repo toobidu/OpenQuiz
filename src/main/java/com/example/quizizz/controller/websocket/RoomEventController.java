@@ -1,9 +1,11 @@
-package com.example.quizizz.controller.event;
+package com.example.quizizz.controller.websocket;
 
-import com.example.quizizz.model.dto.room.*;
-import com.example.quizizz.service.Interface.IRoomService;
-import com.example.quizizz.security.JwtUtil;
 import com.example.quizizz.common.config.WebSocketEventListener;
+import com.example.quizizz.model.dto.room.*;
+import com.example.quizizz.model.dto.websocket.WebSocketMessage;
+import com.example.quizizz.security.JwtUtil;
+import com.example.quizizz.service.Interface.IGameService;
+import com.example.quizizz.service.Interface.IRoomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -29,9 +31,54 @@ import java.time.LocalDateTime;
 public class RoomEventController {
 
     private final IRoomService roomService;
+    private final IGameService gameService;
     private final JwtUtil jwtUtil;
     private final SimpMessagingTemplate messagingTemplate;
     private final WebSocketEventListener webSocketEventListener;
+
+    /**
+     * Xử lý sự kiện tạo phòng qua WebSocket
+     * Client gửi: /app/room/create
+     * Broadcast đến: /topic/rooms (cho tất cả user online)
+     */
+    @MessageMapping("/room/create")
+    public void handleCreateRoom(@Payload CreateRoomRequest request,
+            SimpMessageHeaderAccessor headerAccessor) {
+        try {
+            /** Lấy user ID từ JWT token */
+            String token = (String) headerAccessor.getSessionAttributes().get("token");
+            String username = jwtUtil.getUsernameFromToken(token);
+            Long userId = Long.parseLong(username);
+
+            log.info("WebSocket: User {} creating room {}", userId, request.getRoomName());
+
+            /** Gọi service để tạo phòng */
+            RoomResponse roomResponse = roomService.createRoom(request, userId);
+
+            /** Tạo response event */
+            Map<String, Object> data = Map.of(
+                    "room", roomResponse,
+                    "createdBy", userId);
+            WebSocketMessage<Map<String, Object>> message = WebSocketMessage.success("CREATE_ROOM", data);
+
+            /** Broadcast thông tin phòng mới cho tất cả user */
+            messagingTemplate.convertAndSend("/topic/rooms", message);
+
+        } catch (Exception e) {
+            log.error("Error creating room via WebSocket: ", e);
+
+            /** Gửi error notification cho người tạo */
+            String token = (String) headerAccessor.getSessionAttributes().get("token");
+            String username = jwtUtil.getUsernameFromToken(token);
+
+            WebSocketMessage<String> errorMessage = WebSocketMessage.error("CREATE_ROOM_ERROR", e.getMessage());
+
+            messagingTemplate.convertAndSendToUser(
+                    username,
+                    "/queue/notifications",
+                    errorMessage);
+        }
+    }
 
     /**
      * Xử lý sự kiện join phòng qua WebSocket
@@ -40,48 +87,38 @@ public class RoomEventController {
      */
     @MessageMapping("/room/{roomId}/join")
     @SendTo("/topic/room/{roomId}")
-    public Map<String, Object> handleJoinRoom(
+    public WebSocketMessage<Map<String, Object>> handleJoinRoom(
             @DestinationVariable Long roomId,
             @Payload JoinRoomRequest request,
             SimpMessageHeaderAccessor headerAccessor) {
-        
+
         try {
             /** Lấy user ID từ JWT token */
             String token = (String) headerAccessor.getSessionAttributes().get("token");
             String username = jwtUtil.getUsernameFromToken(token);
             Long userId = Long.parseLong(username);
-            
+
             log.info("WebSocket: User {} joining room {}", userId, roomId);
-            
+
             /** Gọi service để join phòng */
             RoomResponse roomResponse = roomService.joinRoom(request, userId);
-            
+
             /** Track session for disconnect handling */
             webSocketEventListener.addUserToRoom(headerAccessor.getSessionId(), roomId);
-            
+
             /** Tạo response event theo format yêu cầu */
-            Map<String, Object> response = new HashMap<>();
-            response.put("event", "JOIN_ROOM");
-            response.put("data", Map.of(
-                "userId", userId,
-                "username", username
-            ));
-            response.put("timestamp", LocalDateTime.now());
-            
-            return response;
-            
+            Map<String, Object> data = Map.of(
+                    "userId", userId,
+                    "username", username);
+            return WebSocketMessage.success("JOIN_ROOM", data);
+
         } catch (Exception e) {
             log.error("Error joining room via WebSocket: ", e);
-            
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("event", "JOIN_ROOM_ERROR");
-            errorResponse.put("data", Map.of(
-                "error", e.getMessage(),
-                "roomId", roomId
-            ));
-            errorResponse.put("timestamp", LocalDateTime.now());
-            
-            return errorResponse;
+
+            Map<String, Object> errorData = Map.of(
+                    "error", e.getMessage(),
+                    "roomId", roomId);
+            return WebSocketMessage.error("JOIN_ROOM_ERROR", errorData.toString());
         }
     }
 
@@ -92,47 +129,37 @@ public class RoomEventController {
      */
     @MessageMapping("/room/{roomId}/leave")
     @SendTo("/topic/room/{roomId}")
-    public Map<String, Object> handleLeaveRoom(
+    public WebSocketMessage<Map<String, Object>> handleLeaveRoom(
             @DestinationVariable Long roomId,
             SimpMessageHeaderAccessor headerAccessor) {
-        
+
         try {
             /** Lấy user ID từ JWT token */
             String token = (String) headerAccessor.getSessionAttributes().get("token");
             String username = jwtUtil.getUsernameFromToken(token);
             Long userId = Long.parseLong(username);
-            
+
             log.info("WebSocket: User {} leaving room {}", userId, roomId);
-            
+
             /** Gọi service để leave phòng */
             roomService.leaveRoom(roomId, userId);
-            
+
             /** Remove session tracking */
             webSocketEventListener.removeUserFromRoom(headerAccessor.getSessionId());
-            
+
             /** Tạo response event theo format yêu cầu */
-            Map<String, Object> response = new HashMap<>();
-            response.put("event", "LEAVE_ROOM");
-            response.put("data", Map.of(
-                "userId", userId,
-                "username", username
-            ));
-            response.put("timestamp", LocalDateTime.now());
-            
-            return response;
-            
+            Map<String, Object> data = Map.of(
+                    "userId", userId,
+                    "username", username);
+            return WebSocketMessage.success("LEAVE_ROOM", data);
+
         } catch (Exception e) {
             log.error("Error leaving room via WebSocket: ", e);
-            
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("event", "LEAVE_ROOM_ERROR");
-            errorResponse.put("data", Map.of(
-                "error", e.getMessage(),
-                "roomId", roomId
-            ));
-            errorResponse.put("timestamp", LocalDateTime.now());
-            
-            return errorResponse;
+
+            Map<String, Object> errorData = Map.of(
+                    "error", e.getMessage(),
+                    "roomId", roomId);
+            return WebSocketMessage.error("LEAVE_ROOM_ERROR", errorData.toString());
         }
     }
 
@@ -147,19 +174,19 @@ public class RoomEventController {
             @DestinationVariable Long roomId,
             @Payload KickPlayerRequest request,
             SimpMessageHeaderAccessor headerAccessor) {
-        
+
         try {
             /** Lấy host ID từ JWT token */
             String token = (String) headerAccessor.getSessionAttributes().get("token");
             String username = jwtUtil.getUsernameFromToken(token);
             Long hostId = Long.parseLong(username);
-            
-            log.info("WebSocket: Host {} kicking player {} from room {}", 
+
+            log.info("WebSocket: Host {} kicking player {} from room {}",
                     hostId, request.getPlayerId(), roomId);
-            
+
             /** Gọi service để kick player */
             roomService.kickPlayer(roomId, request, hostId);
-            
+
             /** Tạo response event */
             Map<String, Object> response = new HashMap<>();
             response.put("type", "PLAYER_KICKED");
@@ -169,7 +196,7 @@ public class RoomEventController {
             response.put("reason", request.getReason());
             response.put("timestamp", LocalDateTime.now());
             response.put("success", true);
-            
+
             /** Gửi thông báo riêng cho player bị kick */
             Map<String, Object> kickNotification = new HashMap<>();
             kickNotification.put("type", "YOU_WERE_KICKED");
@@ -177,25 +204,24 @@ public class RoomEventController {
             kickNotification.put("kickedBy", hostId);
             kickNotification.put("reason", request.getReason());
             kickNotification.put("timestamp", LocalDateTime.now());
-            
+
             messagingTemplate.convertAndSendToUser(
                     request.getPlayerId().toString(),
                     "/queue/notifications",
-                    kickNotification
-            );
-            
+                    kickNotification);
+
             return response;
-            
+
         } catch (Exception e) {
             log.error("Error kicking player via WebSocket: ", e);
-            
+
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("type", "KICK_ERROR");
             errorResponse.put("roomId", roomId);
             errorResponse.put("error", e.getMessage());
             errorResponse.put("timestamp", LocalDateTime.now());
             errorResponse.put("success", false);
-            
+
             return errorResponse;
         }
     }
@@ -209,62 +235,59 @@ public class RoomEventController {
     public void handleInvitePlayer(
             @Payload InvitePlayerRequest request,
             SimpMessageHeaderAccessor headerAccessor) {
-        
+
         try {
             /** Lấy inviter ID từ JWT token */
             String token = (String) headerAccessor.getSessionAttributes().get("token");
             String username = jwtUtil.getUsernameFromToken(token);
             Long inviterId = Long.parseLong(username);
-            
-            log.info("WebSocket: User {} inviting {} to room {}", 
+
+            log.info("WebSocket: User {} inviting {} to room {}",
                     inviterId, request.getUsername(), request.getRoomId());
-            
+
             /** Gọi service để tạo lời mời */
             InvitationResponse invitation = roomService.invitePlayer(request, inviterId);
-            
+
             /** Tạo notification cho người được mời */
             Map<String, Object> invitationNotification = new HashMap<>();
             invitationNotification.put("type", "ROOM_INVITATION");
             invitationNotification.put("invitation", invitation);
             invitationNotification.put("timestamp", LocalDateTime.now());
-            
+
             /** Gửi notification đến user được mời */
             messagingTemplate.convertAndSendToUser(
                     request.getUsername(),
                     "/queue/invitations",
-                    invitationNotification
-            );
-            
+                    invitationNotification);
+
             /** Gửi confirmation cho người mời */
             Map<String, Object> confirmation = new HashMap<>();
             confirmation.put("type", "INVITATION_SENT");
             confirmation.put("invitedUsername", request.getUsername());
             confirmation.put("roomId", request.getRoomId());
             confirmation.put("timestamp", LocalDateTime.now());
-            
+
             messagingTemplate.convertAndSendToUser(
                     inviterId.toString(),
                     "/queue/notifications",
-                    confirmation
-            );
-            
+                    confirmation);
+
         } catch (Exception e) {
             log.error("Error inviting player via WebSocket: ", e);
-            
+
             /** Gửi error notification cho người mời */
             String token = (String) headerAccessor.getSessionAttributes().get("token");
             String username = jwtUtil.getUsernameFromToken(token);
-            
+
             Map<String, Object> errorNotification = new HashMap<>();
             errorNotification.put("type", "INVITATION_ERROR");
             errorNotification.put("error", e.getMessage());
             errorNotification.put("timestamp", LocalDateTime.now());
-            
+
             messagingTemplate.convertAndSendToUser(
                     username,
                     "/queue/notifications",
-                    errorNotification
-            );
+                    errorNotification);
         }
     }
 
@@ -279,21 +302,21 @@ public class RoomEventController {
             @DestinationVariable Long roomId,
             @Payload Map<String, Long> payload,
             SimpMessageHeaderAccessor headerAccessor) {
-        
+
         try {
             /** Lấy current host ID từ JWT token */
             String token = (String) headerAccessor.getSessionAttributes().get("token");
             String username = jwtUtil.getUsernameFromToken(token);
             Long currentHostId = Long.parseLong(username);
-            
+
             Long newHostId = payload.get("newHostId");
-            
-            log.info("WebSocket: Transferring host from {} to {} in room {}", 
+
+            log.info("WebSocket: Transferring host from {} to {} in room {}",
                     currentHostId, newHostId, roomId);
-            
+
             /** Gọi service để transfer host */
             RoomResponse roomResponse = roomService.transferHost(roomId, newHostId, currentHostId);
-            
+
             /** Tạo response event */
             Map<String, Object> response = new HashMap<>();
             response.put("type", "HOST_TRANSFERRED");
@@ -303,31 +326,30 @@ public class RoomEventController {
             response.put("room", roomResponse);
             response.put("timestamp", LocalDateTime.now());
             response.put("success", true);
-            
+
             /** Gửi notification riêng cho host mới */
             Map<String, Object> hostNotification = new HashMap<>();
             hostNotification.put("type", "YOU_ARE_NOW_HOST");
             hostNotification.put("roomId", roomId);
             hostNotification.put("timestamp", LocalDateTime.now());
-            
+
             messagingTemplate.convertAndSendToUser(
                     newHostId.toString(),
                     "/queue/notifications",
-                    hostNotification
-            );
-            
+                    hostNotification);
+
             return response;
-            
+
         } catch (Exception e) {
             log.error("Error transferring host via WebSocket: ", e);
-            
+
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("type", "TRANSFER_HOST_ERROR");
             errorResponse.put("roomId", roomId);
             errorResponse.put("error", e.getMessage());
             errorResponse.put("timestamp", LocalDateTime.now());
             errorResponse.put("success", false);
-            
+
             return errorResponse;
         }
     }
@@ -342,18 +364,19 @@ public class RoomEventController {
     public Map<String, Object> handleStartGame(
             @DestinationVariable Long roomId,
             SimpMessageHeaderAccessor headerAccessor) {
-        
+
         try {
             /** Lấy host ID từ JWT token */
             String token = (String) headerAccessor.getSessionAttributes().get("token");
             String username = jwtUtil.getUsernameFromToken(token);
             Long hostId = Long.parseLong(username);
-            
+
             log.info("WebSocket: Host {} starting game in room {}", hostId, roomId);
-            
+
             /** Gọi service để start game */
             roomService.startGame(roomId, hostId);
-            
+            gameService.startGameSession(roomId);
+
             /** Tạo response event */
             Map<String, Object> response = new HashMap<>();
             response.put("type", "GAME_STARTED");
@@ -361,19 +384,19 @@ public class RoomEventController {
             response.put("startedBy", hostId);
             response.put("timestamp", LocalDateTime.now());
             response.put("success", true);
-            
+
             return response;
-            
+
         } catch (Exception e) {
             log.error("Error starting game via WebSocket: ", e);
-            
+
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("type", "START_GAME_ERROR");
             errorResponse.put("roomId", roomId);
             errorResponse.put("error", e.getMessage());
             errorResponse.put("timestamp", LocalDateTime.now());
             errorResponse.put("success", false);
-            
+
             return errorResponse;
         }
     }
@@ -387,48 +410,46 @@ public class RoomEventController {
     public void handleGetRoomPlayers(
             @DestinationVariable Long roomId,
             SimpMessageHeaderAccessor headerAccessor) {
-        
+
         try {
             /** Lấy user ID từ JWT token */
             String token = (String) headerAccessor.getSessionAttributes().get("token");
             String username = jwtUtil.getUsernameFromToken(token);
-            
+
             log.info("WebSocket: User {} requesting players list for room {}", username, roomId);
-            
+
             /** Lấy danh sách players */
             var players = roomService.getRoomPlayers(roomId);
-            
+
             /** Tạo response */
             Map<String, Object> response = new HashMap<>();
             response.put("type", "ROOM_PLAYERS");
             response.put("roomId", roomId);
             response.put("players", players);
             response.put("timestamp", LocalDateTime.now());
-            
+
             /** Gửi trực tiếp cho client yêu cầu */
             messagingTemplate.convertAndSendToUser(
                     username,
                     "/queue/room-players",
-                    response
-            );
-            
+                    response);
+
         } catch (Exception e) {
             log.error("Error getting room players via WebSocket: ", e);
-            
+
             String token = (String) headerAccessor.getSessionAttributes().get("token");
             String username = jwtUtil.getUsernameFromToken(token);
-            
+
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("type", "GET_PLAYERS_ERROR");
             errorResponse.put("roomId", roomId);
             errorResponse.put("error", e.getMessage());
             errorResponse.put("timestamp", LocalDateTime.now());
-            
+
             messagingTemplate.convertAndSendToUser(
                     username,
                     "/queue/room-players",
-                    errorResponse
-            );
+                    errorResponse);
         }
     }
 }

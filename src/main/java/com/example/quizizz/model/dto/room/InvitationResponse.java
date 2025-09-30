@@ -6,23 +6,18 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * DTO response cho lời mời vào phòng
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class InvitationResponse {
-    
     private Long id;
     private Long roomId;
     private String roomName;
-    private Long invitedUserId;
-    private String invitedUsername;
-    private Long invitedBy;
+    private Long inviterId;
     private String inviterUsername;
-    private String status;
-    private String message;
-    private LocalDateTime expiresAt;
+    private Long inviteeId;
+    private String inviteeUsername;
+    private String status; // PENDING, ACCEPTED, DECLINED
     private LocalDateTime createdAt;
+    private LocalDateTime expiresAt;
 }

@@ -1,4 +1,4 @@
-package com.example.quizizz.controller;
+package com.example.quizizz.controller.api;
 
 import com.example.quizizz.common.constants.MessageCode;
 import com.example.quizizz.model.dto.role.CreateRoleRequest;

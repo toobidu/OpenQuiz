@@ -1,0 +1,268 @@
+package com.example.quizizz.service.Implement;
+
+import com.example.quizizz.common.constants.GameStatus;
+import com.example.quizizz.model.dto.game.*;
+import com.example.quizizz.model.dto.game.PlayerRanking;
+import com.example.quizizz.model.dto.game.PlayerScore;
+import com.example.quizizz.model.dto.game.AnswerOption;
+import com.example.quizizz.model.entity.*;
+import com.example.quizizz.repository.*;
+import com.example.quizizz.service.Interface.IGameService;
+import com.example.quizizz.service.Interface.IRedisService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class GameServiceImplement implements IGameService {
+
+    private final IRedisService redisService;
+    private final GameSessionRepository gameSessionRepository;
+    private final GameQuestionRepository gameQuestionRepository;
+    private final UserAnswerRepository userAnswerRepository;
+    private final GameHistoryRepository gameHistoryRepository;
+    private final QuestionRepository questionRepository;
+    private final AnswerRepository answerRepository;
+    private final RoomRepository roomRepository;
+    private final RoomPlayerRepository roomPlayerRepository;
+
+    @Override
+    @Transactional
+    public void startGameSession(Long roomId) {
+        // Tạo game session mới
+        GameSession gameSession = new GameSession();
+        gameSession.setRoomId(roomId);
+        gameSession.setGameStatus("IN_PROGRESS");
+        gameSession.setStartTime(LocalDateTime.now());
+        gameSession = gameSessionRepository.save(gameSession);
+
+        // Lấy danh sách câu hỏi cho topic của room
+        Room room = roomRepository.findById(roomId).orElseThrow();
+        List<Question> questions = questionRepository.findQuestionByTopicId(room.getTopicId());
+
+        // Shuffle và lấy số lượng cần thiết (default 10)
+        Collections.shuffle(questions);
+        int questionCount = 10; // Default
+        questions = questions.subList(0, Math.min(questionCount, questions.size()));
+
+        // Tạo game questions
+        for (int i = 0; i < questions.size(); i++) {
+            GameQuestion gameQuestion = new GameQuestion();
+            gameQuestion.setGameSessionId(gameSession.getId());
+            gameQuestion.setQuestionId(questions.get(i).getId());
+            gameQuestion.setQuestionOrder(i);
+            gameQuestion.setTimeLimit(Duration.ofSeconds(30)); // Default 30 seconds
+            gameQuestionRepository.save(gameQuestion);
+        }
+
+        // Lưu vào Redis
+        Map<String, Object> sessionData = new HashMap<>();
+        sessionData.put("gameSessionId", gameSession.getId());
+        sessionData.put("currentQuestionIndex", 0);
+        sessionData.put("totalQuestions", questions.size());
+        sessionData.put("status", GameStatus.IN_PROGRESS.name());
+        redisService.saveGameSession("game:" + roomId, sessionData);
+
+        log.info("Started game session {} for room {}", gameSession.getId(), roomId);
+    }
+
+    @Override
+    public NextQuestionResponse getNextQuestion(Long roomId) {
+        String gameId = "game:" + roomId;
+        Map<String, Object> sessionData = redisService.getGameSession(gameId);
+
+        if (sessionData == null || !GameStatus.IN_PROGRESS.name().equals(sessionData.get("status"))) {
+            throw new RuntimeException("Game not active");
+        }
+
+        int currentIndex = (Integer) sessionData.get("currentQuestionIndex");
+        int totalQuestions = (Integer) sessionData.get("totalQuestions");
+        Long gameSessionId = (Long) sessionData.get("gameSessionId");
+
+        if (currentIndex >= totalQuestions) {
+            // Game over
+            endGame(roomId);
+            return null;
+        }
+
+        // Lấy câu hỏi tiếp theo
+        List<GameQuestion> gameQuestions = gameQuestionRepository.findByGameSessionIdOrderByQuestionOrder(gameSessionId);
+        GameQuestion currentGameQuestion = gameQuestions.get(currentIndex);
+        Question question = questionRepository.findById(currentGameQuestion.getQuestionId()).orElseThrow();
+
+        // Lấy đáp án
+        List<Answer> answers = answerRepository.findByQuestionId(question.getId());
+        List<AnswerOption> answerOptions = answers.stream()
+                .map(a -> new AnswerOption(a.getId(), a.getAnswerText()))
+                .collect(Collectors.toList());
+
+        NextQuestionResponse response = new NextQuestionResponse();
+        response.setQuestionId(question.getId());
+        response.setQuestionText(question.getQuestionText());
+        response.setAnswers(answerOptions);
+        response.setTimeLimit(30); // Default 30 seconds
+        response.setQuestionNumber(currentIndex + 1);
+        response.setTotalQuestions(totalQuestions);
+
+        // Cập nhật current index
+        redisService.updateGameSession(gameId, "currentQuestionIndex", currentIndex + 1);
+
+        return response;
+    }
+
+    @Override
+    @Transactional
+    public QuestionResultResponse submitAnswer(Long roomId, Long userId, AnswerSubmitRequest request) {
+        // Kiểm tra đáp án
+        Answer answer = answerRepository.findById(request.getAnswerId()).orElseThrow();
+        boolean isCorrect = answer.getIsCorrect();
+
+        // Tính điểm (có thể có logic phức tạp hơn)
+        int score = isCorrect ? 100 : 0;
+
+        // Lưu user answer
+        UserAnswer userAnswer = new UserAnswer();
+        userAnswer.setUserId(userId);
+        userAnswer.setQuestionId(request.getQuestionId());
+        userAnswer.setRoomId(roomId);
+        userAnswer.setAnswerId(request.getAnswerId());
+        userAnswer.setIsCorrect(isCorrect);
+        userAnswer.setScore(score);
+        userAnswer.setTimeTaken(request.getTimeTaken().intValue());
+        userAnswerRepository.save(userAnswer);
+
+        QuestionResultResponse response = new QuestionResultResponse();
+        response.setIsCorrect(isCorrect);
+        response.setScore(score);
+        response.setTimeTaken(request.getTimeTaken());
+        // Find correct answer
+        List<Answer> correctAnswers = answerRepository.findByQuestionId(request.getQuestionId())
+                .stream().filter(Answer::getIsCorrect).collect(Collectors.toList());
+        Long correctAnswerId = correctAnswers.isEmpty() ? null : correctAnswers.get(0).getId();
+        response.setCorrectAnswerId(correctAnswerId);
+
+        return response;
+    }
+
+    @Override
+    @Transactional
+    public GameOverResponse endGame(Long roomId) {
+        String gameId = "game:" + roomId;
+        Map<String, Object> sessionData = redisService.getGameSession(gameId);
+
+        if (sessionData == null) {
+            throw new RuntimeException("Game session not found");
+        }
+
+        Long gameSessionId = (Long) sessionData.get("gameSessionId");
+
+        // Cập nhật game session
+        GameSession gameSession = gameSessionRepository.findById(gameSessionId).orElseThrow();
+        gameSession.setGameStatus(GameStatus.FINISHED.name());
+        gameSession.setEndTime(LocalDateTime.now());
+        gameSessionRepository.save(gameSession);
+
+        // Tính ranking
+        List<UserAnswer> allAnswers = userAnswerRepository.findByRoomId(roomId);
+        Map<Long, Integer> userScores = new HashMap<>();
+        Map<Long, Long> userTimes = new HashMap<>();
+        Map<Long, String> userNames = new HashMap<>();
+
+        // Lấy danh sách players
+        List<RoomPlayers> players = roomPlayerRepository.findByRoomId(roomId);
+        for (RoomPlayers player : players) {
+            userNames.put(player.getUserId(), "User" + player.getUserId()); // TODO: Get from User entity
+            userScores.put(player.getUserId(), 0);
+            userTimes.put(player.getUserId(), 0L);
+        }
+
+        // Tính tổng điểm và thời gian
+        for (UserAnswer answer : allAnswers) {
+            userScores.put(answer.getUserId(), userScores.get(answer.getUserId()) + answer.getScore());
+            userTimes.put(answer.getUserId(), userTimes.get(answer.getUserId()) + answer.getTimeTaken());
+        }
+
+        // Tạo ranking
+        List<PlayerRanking> rankings = userScores.entrySet().stream()
+                .sorted((e1, e2) -> {
+                    int scoreCompare = e2.getValue().compareTo(e1.getValue());
+                    if (scoreCompare == 0) {
+                        return userTimes.get(e1.getKey()).compareTo(userTimes.get(e2.getKey()));
+                    }
+                    return scoreCompare;
+                })
+                .map(entry -> {
+                    PlayerRanking ranking = new PlayerRanking();
+                    ranking.setUserId(entry.getKey());
+                    ranking.setUserName(userNames.get(entry.getKey()));
+                    ranking.setTotalScore(entry.getValue());
+                    ranking.setTotalTime(userTimes.get(entry.getKey()));
+                    return ranking;
+                })
+                .collect(Collectors.toList());
+
+        // Set rank
+        for (int i = 0; i < rankings.size(); i++) {
+            rankings.get(i).setRank(i + 1);
+        }
+
+        // Tạo user scores
+        List<PlayerScore> playerScores = allAnswers.stream()
+                .collect(Collectors.groupingBy(UserAnswer::getUserId))
+                .entrySet().stream()
+                .map(entry -> {
+                    PlayerScore score = new PlayerScore();
+                    score.setUserId(entry.getKey());
+                    score.setUserName(userNames.get(entry.getKey()));
+                    score.setScore(userScores.get(entry.getKey()));
+                    score.setTimeTaken(userTimes.get(entry.getKey()));
+                    return score;
+                })
+                .collect(Collectors.toList());
+
+        // Lưu game history
+        int totalQuestions = (Integer) sessionData.get("totalQuestions");
+        for (PlayerRanking ranking : rankings) {
+            GameHistory history = new GameHistory();
+            history.setGameSessionId(gameSessionId);
+            history.setUserId(ranking.getUserId());
+            history.setScore(ranking.getTotalScore().intValue());
+            // TODO: Calculate correct answers
+            history.setCorrectAnswers(0);
+            history.setTotalQuestions(totalQuestions);
+            gameHistoryRepository.save(history);
+        }
+
+        // Cập nhật Redis
+        redisService.updateGameStatus(gameId, GameStatus.FINISHED);
+
+        GameOverResponse response = new GameOverResponse();
+        response.setRanking(rankings);
+        response.setUserScores(playerScores);
+
+        log.info("Ended game session {} for room {}", gameSessionId, roomId);
+
+        return response;
+    }
+
+    @Override
+    public boolean isGameActive(Long roomId) {
+        String gameId = "game:" + roomId;
+        String status = (String) redisService.getGameSession(gameId).get("status");
+        return GameStatus.IN_PROGRESS.name().equals(status);
+    }
+
+    @Override
+    public int getRemainingTime(Long roomId) {
+        // Simplified - in real implementation, track question start time
+        return 30; // Default 30 seconds
+    }
+}

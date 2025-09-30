@@ -1,4 +1,4 @@
-package com.example.quizizz.controller;
+package com.example.quizizz.controller.api;
 
 import com.example.quizizz.common.config.ApiResponse;
 import com.example.quizizz.common.constants.MessageCode;
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final IAuthService authService;
-//    private final JwtUtil jwtUtil;
 
     @Operation(summary = "Đăng ký tài khoản", description = "Đăng ký tài khoản mới cho người dùng")
     @PostMapping("/register")

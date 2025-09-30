@@ -1,9 +1,14 @@
 package com.example.quizizz.model.dto.room;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PagedRoomResponse {
     private List<RoomResponse> rooms;
     private int currentPage;

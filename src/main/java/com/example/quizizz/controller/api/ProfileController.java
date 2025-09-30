@@ -1,4 +1,4 @@
-package com.example.quizizz.controller;
+package com.example.quizizz.controller.api;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
@@ -42,6 +42,21 @@ public class ProfileController {
     @Operation(summary = "Cập nhật hồ sơ người dùng", description = "Cập nhật thông tin hồ sơ của người dùng hiện tại")
     public ResponseEntity<ApiResponse<UpdateProfileResponse>> updateProfile(@RequestBody UpdateProfileRequest request, Authentication auth) {
         Long userId = Long.valueOf(auth.getName());
+        UpdateProfileResponse response = profileService.updateProfile(userId, request);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PutMapping("/{userId}")
+    @PreAuthorize("hasAuthority('user:manage_profile')")
+    @Operation(summary = "Cập nhật hồ sơ người dùng theo ID", description = "Cập nhật thông tin hồ sơ của người dùng (chỉ được edit profile của chính mình)")
+    public ResponseEntity<ApiResponse<UpdateProfileResponse>> updateProfileById(
+            @PathVariable Long userId,
+            @RequestBody UpdateProfileRequest request, 
+            Authentication auth) {
+        Long currentUserId = Long.valueOf(auth.getName());
+        if (!currentUserId.equals(userId)) {
+            return ResponseEntity.status(403).body(ApiResponse.error(403, MessageCode.FORBIDDEN, "Cannot edit other user's profile"));
+        }
         UpdateProfileResponse response = profileService.updateProfile(userId, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }

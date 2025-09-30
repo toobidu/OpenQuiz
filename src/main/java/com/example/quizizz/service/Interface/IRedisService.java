@@ -75,6 +75,8 @@ public interface IRedisService {
      * Token blacklist
      */
     void addTokenToBlacklist(String token, long expiration);
+    
+    void addTokenToBlacklistWithRefreshTTL(String token, long refreshTokenExpiration);
 
     boolean isTokenBlacklisted(String token);
 
