@@ -25,6 +25,24 @@ public class RoomEventListener {
                 client.joinRoom("room-" + data.getRoomId());
                 handler.getSessionManager().addRoomSession(client.getSessionId().toString(), data.getRoomId());
 
+                // Broadcast player-joined like in roomCode path so host UI updates in real-time
+                String username = handler.getUserRepository().findById(userId)
+                        .map(user -> user.getUsername()).orElse("Unknown");
+                handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
+                        .sendEvent("player-joined", Map.of(
+                                "roomId", data.getRoomId(),
+                                "userId", userId,
+                                "username", username
+                        ));
+
+                // broadcast updated players list
+                var players = handler.getRoomService().getRoomPlayers(data.getRoomId());
+                handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
+                        .sendEvent("room-players", Map.of(
+                                "roomId", data.getRoomId(),
+                                "players", players
+                        ));
+
                 client.sendEvent("join-room-success", Map.of(
                         "success", true,
                         "roomId", data.getRoomId(),
@@ -45,12 +63,21 @@ public class RoomEventListener {
 
                 String username = handler.getUserRepository().findById(userId)
                         .map(user -> user.getUsername()).orElse("Unknown");
-                        
+
                 handler.getSocketIOServer().getRoomOperations("room-" + roomResponse.getId())
                         .sendEvent("player-joined", Map.of(
+                                "roomId", roomResponse.getId(),
                                 "userId", userId,
-                                "username", username,
-                                "room", roomResponse));
+                                "username", username
+                        ));
+
+                // broadcast updated players list
+                var players = handler.getRoomService().getRoomPlayers(roomResponse.getId());
+                handler.getSocketIOServer().getRoomOperations("room-" + roomResponse.getId())
+                        .sendEvent("room-players", Map.of(
+                                "roomId", roomResponse.getId(),
+                                "players", players
+                        ));
 
                 client.sendEvent("join-room-success", Map.of(
                         "success", true,
@@ -83,7 +110,18 @@ public class RoomEventListener {
             handler.getSessionManager().removeRoomSession(client.getSessionId().toString());
 
             handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
-                    .sendEvent("player-left", Map.of("userId", userId));
+                    .sendEvent("player-left", Map.of(
+                            "roomId", data.getRoomId(),
+                            "userId", userId
+                    ));
+
+            // broadcast updated players list
+            var players = handler.getRoomService().getRoomPlayers(data.getRoomId());
+            handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
+                    .sendEvent("room-players", Map.of(
+                            "roomId", data.getRoomId(),
+                            "players", players
+                    ));
 
             log.info("User {} left room {}", userId, data.getRoomId());
 
@@ -106,13 +144,23 @@ public class RoomEventListener {
 
             String kickedUsername = handler.getUserRepository().findById(data.getPlayerId())
                     .map(user -> user.getUsername()).orElse("Unknown");
-                    
+
             handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
                     .sendEvent("player-kicked", Map.of(
-                            "kickedPlayerId", data.getPlayerId(),
-                            "kickedUsername", kickedUsername,
+                            "roomId", data.getRoomId(),
+                            "playerId", data.getPlayerId(),
                             "reason", data.getReason(),
-                            "kickedBy", userId));
+                            "kickedBy", userId,
+                            "username", kickedUsername
+                    ));
+
+            // broadcast updated players list
+            var players = handler.getRoomService().getRoomPlayers(data.getRoomId());
+            handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
+                    .sendEvent("room-players", Map.of(
+                            "roomId", data.getRoomId(),
+                            "players", players
+                    ));
 
             log.info("User {} kicked player {} from room {}", userId, data.getPlayerId(), data.getRoomId());
 
@@ -130,10 +178,21 @@ public class RoomEventListener {
             handler.getRoomService().startGame(data.getRoomId(), userId);
             handler.getGameService().startGameSession(data.getRoomId());
 
+            // Build minimal game state
+            var room = handler.getRoomService().getRoomById(data.getRoomId());
+            var gameState = Map.of(
+                    "roomId", data.getRoomId(),
+                    "gameStatus", "PLAYING",
+                    "totalQuestions", room.getQuestionCount(),
+                    "currentQuestionNumber", 0,
+                    "timeRemaining", handler.getGameService().getRemainingTime(data.getRoomId()),
+                    "isHost", true
+            );
+
             handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
                     .sendEvent("game-started", Map.of(
                             "roomId", data.getRoomId(),
-                            "startedBy", userId));
+                            "gameState", gameState));
 
             // Send success response to the client who started the game
             client.sendEvent("start-game-success", Map.of(

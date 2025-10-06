@@ -313,7 +313,24 @@ public class RoomServiceImplement implements IRoomService {
         roomPlayerRepository.save(oldHost);
         roomPlayerRepository.save(newHost);
 
-        return mapToRoomResponse(updatedRoom);
+        RoomResponse response = mapToRoomResponse(updatedRoom);
+
+        // Broadcast host-changed and updated players list to room channel
+        try {
+            socketIOServer.getRoomOperations("room-" + roomId)
+                    .sendEvent("host-changed", Map.of(
+                            "roomId", roomId,
+                            "newHostId", newHostId
+                    ));
+            List<RoomPlayerResponse> players = getRoomPlayers(roomId);
+            socketIOServer.getRoomOperations("room-" + roomId)
+                    .sendEvent("room-players", Map.of(
+                            "roomId", roomId,
+                            "players", players
+                    ));
+        } catch (Exception ignored) {}
+
+        return response;
     }
 
     @Override

@@ -55,8 +55,14 @@ public class EventRegistrar {
                 (client, data, ackSender) -> roomEventListener.handleGetPlayers(client, data, handler));
 
         // Game events
+        // Legacy event for backward compatibility
         server.addEventListener("submit-answer", SubmitAnswerData.class,
                 (client, data, ackSender) -> gameEventListener.handleSubmitAnswer(client, data, handler));
+        // Spec-compliant event (camelCase)
+        server.addEventListener("submitAnswer", SubmitAnswerFrontDto.class,
+                (client, data, ackSender) -> gameEventListener.handleSubmitAnswerFront(client, data, handler));
+        server.addEventListener("getGameState", GetGameStateData.class,
+                (client, data, ackSender) -> gameEventListener.handleGetGameState(client, data, handler));
         server.addEventListener("next-question", NextQuestionData.class,
                 (client, data, ackSender) -> gameEventListener.handleNextQuestion(client, data, handler));
 

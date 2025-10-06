@@ -1,0 +1,1 @@
+package com.example.quizizz.controller.socketio.dto;import lombok.Data;@Datapublic class GetGameStateData {    private String roomCode;}

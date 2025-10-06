@@ -279,4 +279,34 @@ public class GameServiceImplement implements IGameService {
         Room room = roomRepository.findById(roomId).orElseThrow();
         return room.getCountdownTime();
     }
+
+    @Override
+    public Long resolveAnswerId(Long questionId, Integer selectedOptionIndex, String selectedAnswer, String answerText) {
+        List<Answer> answers = answerRepository.findByQuestionId(questionId);
+        if (answers == null || answers.isEmpty()) {
+            throw new RuntimeException("No answers found for question " + questionId);
+        }
+        // Prefer match by text first
+        if (selectedAnswer != null) {
+            Optional<Answer> match = answers.stream()
+                    .filter(a -> selectedAnswer.equalsIgnoreCase(a.getAnswerText()))
+                    .findFirst();
+            if (match.isPresent()) return match.get().getId();
+        }
+        if (answerText != null) {
+            Optional<Answer> match = answers.stream()
+                    .filter(a -> answerText.equalsIgnoreCase(a.getAnswerText()))
+                    .findFirst();
+            if (match.isPresent()) return match.get().getId();
+        }
+        // Fallback by index if provided (0-based)
+        if (selectedOptionIndex != null) {
+            // Ensure a deterministic order
+            answers.sort(Comparator.comparing(Answer::getId));
+            if (selectedOptionIndex >= 0 && selectedOptionIndex < answers.size()) {
+                return answers.get(selectedOptionIndex).getId();
+            }
+        }
+        throw new RuntimeException("Cannot resolve answerId from provided selection for question " + questionId);
+    }
 }

@@ -9,4 +9,5 @@ public interface IGameService {
     GameOverResponse endGame(Long roomId);
     boolean isGameActive(Long roomId);
     int getRemainingTime(Long roomId);
+    Long resolveAnswerId(Long questionId, Integer selectedOptionIndex, String selectedAnswer, String answerText);
 }

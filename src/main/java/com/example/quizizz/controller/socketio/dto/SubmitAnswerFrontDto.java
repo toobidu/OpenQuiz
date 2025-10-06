@@ -1,0 +1,1 @@
+package com.example.quizizz.controller.socketio.dto;import lombok.Data;@Datapublic class SubmitAnswerFrontDto {    private String roomCode;    private Long questionId;    private String selectedAnswer;    private Integer selectedOptionIndex;    private Long submissionTime;    private String answerText;}
