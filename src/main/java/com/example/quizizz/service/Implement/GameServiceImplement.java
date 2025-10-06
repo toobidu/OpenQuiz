@@ -1,6 +1,7 @@
 package com.example.quizizz.service.Implement;
 
 import com.example.quizizz.common.constants.GameStatus;
+import com.example.quizizz.common.constants.RoomStatus;
 import com.example.quizizz.model.dto.game.*;
 import com.example.quizizz.model.dto.game.PlayerRanking;
 import com.example.quizizz.model.dto.game.PlayerScore;
@@ -9,6 +10,7 @@ import com.example.quizizz.model.entity.*;
 import com.example.quizizz.repository.*;
 import com.example.quizizz.service.Interface.IGameService;
 import com.example.quizizz.service.Interface.IRedisService;
+import com.example.quizizz.service.helper.GameScoreCalculator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ public class GameServiceImplement implements IGameService {
     private final AnswerRepository answerRepository;
     private final RoomRepository roomRepository;
     private final RoomPlayerRepository roomPlayerRepository;
+    private final GameScoreCalculator scoreCalculator;
 
     @Override
     @Transactional
@@ -48,9 +51,9 @@ public class GameServiceImplement implements IGameService {
         Room room = roomRepository.findById(roomId).orElseThrow();
         List<Question> questions = questionRepository.findQuestionByTopicId(room.getTopicId());
 
-        // Shuffle và lấy số lượng cần thiết (default 10)
+        // Shuffle và lấy số lượng theo cấu hình phòng
         Collections.shuffle(questions);
-        int questionCount = 10; // Default
+        int questionCount = room.getQuestionCount();
         questions = questions.subList(0, Math.min(questionCount, questions.size()));
 
         // Tạo game questions
@@ -59,7 +62,7 @@ public class GameServiceImplement implements IGameService {
             gameQuestion.setGameSessionId(gameSession.getId());
             gameQuestion.setQuestionId(questions.get(i).getId());
             gameQuestion.setQuestionOrder(i);
-            gameQuestion.setTimeLimit(Duration.ofSeconds(30)); // Default 30 seconds
+            gameQuestion.setTimeLimit(Duration.ofSeconds(room.getCountdownTime()));
             gameQuestionRepository.save(gameQuestion);
         }
 
@@ -93,8 +96,10 @@ public class GameServiceImplement implements IGameService {
             return null;
         }
 
-        // Lấy câu hỏi tiếp theo
-        List<GameQuestion> gameQuestions = gameQuestionRepository.findByGameSessionIdOrderByQuestionOrder(gameSessionId);
+        // Lấy thông tin phòng và câu hỏi tiếp theo
+        Room room = roomRepository.findById(roomId).orElseThrow();
+        List<GameQuestion> gameQuestions = gameQuestionRepository
+                .findByGameSessionIdOrderByQuestionOrder(gameSessionId);
         GameQuestion currentGameQuestion = gameQuestions.get(currentIndex);
         Question question = questionRepository.findById(currentGameQuestion.getQuestionId()).orElseThrow();
 
@@ -108,7 +113,7 @@ public class GameServiceImplement implements IGameService {
         response.setQuestionId(question.getId());
         response.setQuestionText(question.getQuestionText());
         response.setAnswers(answerOptions);
-        response.setTimeLimit(30); // Default 30 seconds
+        response.setTimeLimit(room.getCountdownTime());
         response.setQuestionNumber(currentIndex + 1);
         response.setTotalQuestions(totalQuestions);
 
@@ -125,8 +130,11 @@ public class GameServiceImplement implements IGameService {
         Answer answer = answerRepository.findById(request.getAnswerId()).orElseThrow();
         boolean isCorrect = answer.getIsCorrect();
 
-        // Tính điểm (có thể có logic phức tạp hơn)
-        int score = isCorrect ? 100 : 0;
+        // Lấy thông tin phòng để tính điểm
+        Room room = roomRepository.findById(roomId).orElseThrow();
+
+        // Tính điểm dựa trên tốc độ và độ chính xác
+        int score = scoreCalculator.calculateScore(isCorrect, request.getTimeTaken(), room.getCountdownTime());
 
         // Lưu user answer
         UserAnswer userAnswer = new UserAnswer();
@@ -244,6 +252,11 @@ public class GameServiceImplement implements IGameService {
         // Cập nhật Redis
         redisService.updateGameStatus(gameId, GameStatus.FINISHED);
 
+        // Cập nhật trạng thái phòng về FINISHED
+        Room room = roomRepository.findById(roomId).orElseThrow();
+        room.setStatus(RoomStatus.FINISHED.name());
+        roomRepository.save(room);
+
         GameOverResponse response = new GameOverResponse();
         response.setRanking(rankings);
         response.setUserScores(playerScores);
@@ -263,6 +276,7 @@ public class GameServiceImplement implements IGameService {
     @Override
     public int getRemainingTime(Long roomId) {
         // Simplified - in real implementation, track question start time
-        return 30; // Default 30 seconds
+        Room room = roomRepository.findById(roomId).orElseThrow();
+        return room.getCountdownTime();
     }
 }

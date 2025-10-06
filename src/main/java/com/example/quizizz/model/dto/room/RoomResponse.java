@@ -25,7 +25,6 @@ public class RoomResponse {
     private Integer maxPlayers;
     private Integer currentPlayers;
     private Integer questionCount;
-    private String questionType;
     private Integer countdownTime;
     private LocalDateTime createdAt;
 }

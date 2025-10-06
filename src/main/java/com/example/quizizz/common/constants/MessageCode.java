@@ -66,6 +66,7 @@ public enum MessageCode {
     
     GAME_STARTED("200", "Game started successfully"),
     PLAYER_LEFT_GAME("200", "Player left game successfully"),
+    PLAYER_KICKED("200", "Player kicked successfully"),
     
     NOT_IMPLEMENTED("501", "Feature not implemented yet");
 

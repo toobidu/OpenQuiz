@@ -13,13 +13,8 @@ import com.example.quizizz.model.entity.User;
 @Mapper(componentModel = "spring")
 public interface ProfileMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "fullName", source = "fullName")
-    @Mapping(target = "email", source = "email")
-    @Mapping(target = "phoneNumber", source = "phoneNumber")
-    @Mapping(target = "address", source = "address")
-    @Mapping(target = "dob", source = "dob")
+    @Mapping(target = "deleted", ignore = true)
     void updateUserFromDto(UpdateProfileRequest dto, @MappingTarget User user);
 
-    @Mapping(target = "createdAt", source = "createdAt")
     UpdateProfileResponse toResponse(User user);
 }

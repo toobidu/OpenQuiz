@@ -2,9 +2,7 @@ package com.example.quizizz.controller.api;
 
 import com.example.quizizz.common.config.ApiResponse;
 import com.example.quizizz.common.constants.MessageCode;
-import com.example.quizizz.common.constants.RoomStatus;
 import com.example.quizizz.model.dto.room.*;
-import org.springframework.data.domain.Page;
 import com.example.quizizz.service.Interface.IRoomService;
 import com.example.quizizz.security.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,10 +31,10 @@ public class RoomController {
     public ResponseEntity<ApiResponse<RoomResponse>> createRoom(
             @Valid @RequestBody CreateRoomRequest request,
             HttpServletRequest httpRequest) {
-        
+
         Long userId = getUserIdFromRequest(httpRequest);
         RoomResponse roomResponse = roomService.createRoom(request, userId);
-        
+
         return ResponseEntity.ok(ApiResponse.success(MessageCode.ROOM_CREATED, roomResponse));
     }
 
@@ -54,25 +52,16 @@ public class RoomController {
         return ResponseEntity.ok(ApiResponse.success(roomResponse));
     }
 
-    @GetMapping("/quick-search")
-    @Operation(summary = "Tìm kiếm nhanh phòng theo room code hoặc tên phòng")
-    public ResponseEntity<ApiResponse<List<RoomResponse>>> quickSearchRooms(
-            @RequestParam String q) {
-        
-        List<RoomResponse> rooms = roomService.quickSearchRooms(q);
-        return ResponseEntity.ok(ApiResponse.success(rooms));
-    }
-
     @PutMapping("/{roomId}")
     @Operation(summary = "Cập nhật thông tin phòng")
     public ResponseEntity<ApiResponse<RoomResponse>> updateRoom(
             @PathVariable Long roomId,
             @Valid @RequestBody UpdateRoomRequest request,
             HttpServletRequest httpRequest) {
-        
+
         Long userId = getUserIdFromRequest(httpRequest);
         RoomResponse roomResponse = roomService.updateRoom(roomId, request, userId);
-        
+
         return ResponseEntity.ok(ApiResponse.success(MessageCode.ROOM_UPDATED, roomResponse));
     }
 
@@ -81,65 +70,20 @@ public class RoomController {
     public ResponseEntity<ApiResponse<Void>> deleteRoom(
             @PathVariable Long roomId,
             HttpServletRequest httpRequest) {
-        
+
         Long userId = getUserIdFromRequest(httpRequest);
         roomService.deleteRoom(roomId, userId);
-        
+
         return ResponseEntity.ok(ApiResponse.success(MessageCode.ROOM_DELETED, null));
     }
 
-    @GetMapping("/my-rooms")
-    @Operation(summary = "Lấy danh sách phòng của user")
-    public ResponseEntity<ApiResponse<List<RoomResponse>>> getMyRooms(HttpServletRequest httpRequest) {
-        Long userId = getUserIdFromRequest(httpRequest);
-        List<RoomResponse> rooms = roomService.getRoomsByOwner(userId);
-        return ResponseEntity.ok(ApiResponse.success(rooms));
-    }
-
-    @GetMapping("/public")
-    @Operation(summary = "Lấy danh sách phòng public có phân trang")
-    public ResponseEntity<ApiResponse<PagedRoomResponse>> getPublicRooms(
-            @RequestParam(required = false, defaultValue = "WAITING") RoomStatus status,
+    @GetMapping
+    @Operation(summary = "Lấy danh sách phòng với phân trang và tìm kiếm", description = "API đơn giản để lấy tất cả phòng (chỉ WAITING status, không bao gồm ARCHIVED). Hỗ trợ phân trang và tìm kiếm theo tên phòng.")
+    public ResponseEntity<ApiResponse<PagedRoomResponse>> getRooms(
             @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "4") int size,
+            @RequestParam(required = false, defaultValue = "10") int size,
             @RequestParam(required = false) String search) {
-        
-        PagedRoomResponse rooms = roomService.getPublicRoomsWithPagination(status, page, size, search);
-        return ResponseEntity.ok(ApiResponse.success(rooms));
-    }
-
-    @GetMapping("/all")
-    @Operation(summary = "Lấy tất cả phòng (public + private) có phân trang")
-    public ResponseEntity<ApiResponse<PagedRoomResponse>> getAllRooms(
-            @RequestParam(required = false, defaultValue = "WAITING") RoomStatus status,
-            @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "4") int size,
-            @RequestParam(required = false) String search) {
-        
-        PagedRoomResponse rooms = roomService.getAllRoomsWithPagination(status, page, size, search);
-        return ResponseEntity.ok(ApiResponse.success(rooms));
-    }
-
-    @GetMapping("/search")
-    @Operation(summary = "Tìm kiếm phòng theo tên hoặc room code")
-    public ResponseEntity<ApiResponse<List<RoomResponse>>> searchRooms(
-            @RequestParam String query,
-            @RequestParam(required = false, defaultValue = "WAITING") RoomStatus status) {
-        
-        List<RoomResponse> rooms = roomService.searchRooms(query, status);
-        return ResponseEntity.ok(ApiResponse.success(rooms));
-    }
-
-    @GetMapping("/my-rooms/paged")
-    @Operation(summary = "Lấy danh sách phòng của user có phân trang")
-    public ResponseEntity<ApiResponse<PagedRoomResponse>> getMyRoomsPaged(
-            HttpServletRequest httpRequest,
-            @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "4") int size,
-            @RequestParam(required = false) String search) {
-        
-        Long userId = getUserIdFromRequest(httpRequest);
-        PagedRoomResponse rooms = roomService.getMyRoomsWithPagination(userId, page, size, search);
+        PagedRoomResponse rooms = roomService.getAllRoomsSimple(page, size, search);
         return ResponseEntity.ok(ApiResponse.success(rooms));
     }
 
@@ -148,10 +92,10 @@ public class RoomController {
     public ResponseEntity<ApiResponse<RoomResponse>> joinRoom(
             @Valid @RequestBody JoinRoomRequest request,
             HttpServletRequest httpRequest) {
-        
+
         Long userId = getUserIdFromRequest(httpRequest);
         RoomResponse roomResponse = roomService.joinRoom(request, userId);
-        
+
         return ResponseEntity.ok(ApiResponse.success(MessageCode.ROOM_JOINED, roomResponse));
     }
 
@@ -160,10 +104,10 @@ public class RoomController {
     public ResponseEntity<ApiResponse<RoomResponse>> joinRoomDirect(
             @PathVariable Long roomId,
             HttpServletRequest httpRequest) {
-        
+
         Long userId = getUserIdFromRequest(httpRequest);
         RoomResponse roomResponse = roomService.joinRoomById(roomId, userId);
-        
+
         return ResponseEntity.ok(ApiResponse.success(MessageCode.ROOM_JOINED, roomResponse));
     }
 
@@ -172,10 +116,10 @@ public class RoomController {
     public ResponseEntity<ApiResponse<Void>> leaveRoom(
             @PathVariable Long roomId,
             HttpServletRequest httpRequest) {
-        
+
         Long userId = getUserIdFromRequest(httpRequest);
         roomService.leaveRoom(roomId, userId);
-        
+
         return ResponseEntity.ok(ApiResponse.success(MessageCode.ROOM_LEFT, null));
     }
 
@@ -192,11 +136,11 @@ public class RoomController {
             @PathVariable Long roomId,
             @Valid @RequestBody KickPlayerRequest request,
             HttpServletRequest httpRequest) {
-        
+
         Long hostId = getUserIdFromRequest(httpRequest);
         roomService.kickPlayer(roomId, request, hostId);
-        
-        return ResponseEntity.ok(ApiResponse.success(MessageCode.PLAYER_LEFT_GAME, null));
+
+        return ResponseEntity.ok(ApiResponse.success(MessageCode.PLAYER_KICKED, null));
     }
 
     @PostMapping("/invite")
@@ -204,10 +148,10 @@ public class RoomController {
     public ResponseEntity<ApiResponse<InvitationResponse>> invitePlayer(
             @Valid @RequestBody InvitePlayerRequest request,
             HttpServletRequest httpRequest) {
-        
+
         Long inviterId = getUserIdFromRequest(httpRequest);
         InvitationResponse invitation = roomService.invitePlayer(request, inviterId);
-        
+
         return ResponseEntity.ok(ApiResponse.success(MessageCode.SUCCESS, invitation));
     }
 
@@ -217,10 +161,10 @@ public class RoomController {
             @PathVariable Long invitationId,
             @RequestParam boolean accept,
             HttpServletRequest httpRequest) {
-        
+
         Long userId = getUserIdFromRequest(httpRequest);
         RoomResponse roomResponse = roomService.respondToInvitation(invitationId, accept, userId);
-        
+
         if (accept && roomResponse != null) {
             return ResponseEntity.ok(ApiResponse.success(MessageCode.ROOM_JOINED, roomResponse));
         } else {
@@ -242,10 +186,10 @@ public class RoomController {
             @PathVariable Long roomId,
             @RequestParam Long newHostId,
             HttpServletRequest httpRequest) {
-        
+
         Long currentHostId = getUserIdFromRequest(httpRequest);
         RoomResponse roomResponse = roomService.transferHost(roomId, newHostId, currentHostId);
-        
+
         return ResponseEntity.ok(ApiResponse.success(MessageCode.ROOM_HOST_TRANSFERRED, roomResponse));
     }
 
@@ -254,10 +198,10 @@ public class RoomController {
     public ResponseEntity<ApiResponse<Void>> startGame(
             @PathVariable Long roomId,
             HttpServletRequest httpRequest) {
-        
+
         Long hostId = getUserIdFromRequest(httpRequest);
         roomService.startGame(roomId, hostId);
-        
+
         return ResponseEntity.ok(ApiResponse.success(MessageCode.GAME_STARTED, null));
     }
 

@@ -1,24 +1,29 @@
 package com.example.quizizz.service.Implement;
 
-import com.example.quizizz.model.dto.question.QuestionWithAnswersResponse;
+import com.example.quizizz.model.dto.question.*;
 import com.example.quizizz.model.entity.Answer;
 import com.example.quizizz.model.entity.Question;
 import com.example.quizizz.repository.AnswerRepository;
 import com.example.quizizz.repository.QuestionRepository;
 import com.example.quizizz.service.Interface.IQuestionService;
+import com.example.quizizz.mapper.QuestionMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class QuestionServiceImplement implements IQuestionService {
     
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
+    private final QuestionMapper questionMapper;
 
     @Override
     public List<QuestionWithAnswersResponse> getRandomQuestionsWithAnswers(Long topicId, String questionType, int count) {
@@ -79,5 +84,57 @@ public class QuestionServiceImplement implements IQuestionService {
             question.getQuestionType(),
             answers
         );
+    }
+
+    @Override
+    public QuestionResponse createQuestion(CreateQuestionRequest request) {
+        Question question = questionMapper.toEntity(request);
+        Question savedQuestion = questionRepository.save(question);
+        return questionMapper.toResponse(savedQuestion);
+    }
+
+    @Override
+    public List<QuestionResponse> createBulkQuestions(CreateBulkQuestionsRequest request) {
+        List<Question> questions = request.getQuestions().stream()
+                .map(questionMapper::toEntity)
+                .collect(Collectors.toList());
+        List<Question> savedQuestions = questionRepository.saveAll(questions);
+        return savedQuestions.stream()
+                .map(questionMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public QuestionResponse updateQuestion(Long id, UpdateQuestionRequest request) {
+        Question question = questionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Question not found"));
+        questionMapper.updateEntityFromRequest(question, request);
+        Question updatedQuestion = questionRepository.save(question);
+        return questionMapper.toResponse(updatedQuestion);
+    }
+
+    @Override
+    public void deleteQuestion(Long id) {
+        questionRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteBulkQuestions(DeleteBulkQuestionsRequest request) {
+        questionRepository.deleteAllById(request.getQuestionIds());
+    }
+
+    @Override
+    public QuestionResponse getQuestionById(Long id) {
+        Question question = questionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Question not found"));
+        return questionMapper.toResponse(question);
+    }
+
+    @Override
+    public List<QuestionWithAnswersResponse> getQuestionsByTopicId(Long topicId) {
+        List<Question> questions = questionRepository.findQuestionByTopicId(topicId);
+        return questions.stream()
+                .map(this::mapToQuestionWithAnswers)
+                .collect(Collectors.toList());
     }
 }

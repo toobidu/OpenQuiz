@@ -82,4 +82,10 @@ public interface RoomPlayerRepository extends JpaRepository<RoomPlayers, Long> {
      * Xóa tất cả player của phòng
      */
     void deleteByRoomId(Long roomId);
+
+    /**
+     * Kiểm tra user có phải host của phòng không
+     */
+    @Query("SELECT COUNT(rp) > 0 FROM RoomPlayers rp WHERE rp.roomId = :roomId AND rp.userId = :userId AND rp.isHost = :isHost AND rp.status = 'ACTIVE'")
+    boolean existsByRoomIdAndUserIdAndIsHost(@Param("roomId") Long roomId, @Param("userId") Long userId, @Param("isHost") Boolean isHost);
 }

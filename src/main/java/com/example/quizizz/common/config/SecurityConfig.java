@@ -42,10 +42,15 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Socket.IO endpoints - allow all for WebSocket handshake
+                        .requestMatchers("/socket.io/**").permitAll()
+                        // Legacy WebSocket endpoints (if still needed)
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/ws/info/**").permitAll()
+                        // Swagger endpoints
                         .requestMatchers(swaggerPaths).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 // Thêm JWT filter
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

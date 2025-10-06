@@ -16,7 +16,7 @@ Backend API cho ứng dụng Quizizz - hệ thống tạo và quản lý quiz tr
 ## Yêu cầu hệ thống
 - Java 17+
 - Maven 3.6+
-- MySQL 8.0+
+- PostgreSQL
 - Redis 6.0+
 
 ## Cài đặt và chạy
@@ -144,6 +144,189 @@ src/
 - `POST /role-permissions/assign-permissions-to-role` - Gán quyền cho role
 - `DELETE /role-permissions/remove-permissions-from-role` - Xóa quyền khỏi role
 
+### Room Management (REST API)
+- `POST /rooms` - Tạo phòng (tự động join vào waiting room)
+- `GET /rooms/{id}` - Lấy thông tin phòng
+- `GET /rooms/code/{roomCode}` - Lấy phòng theo room code
+- `POST /rooms/join` - Join phòng bằng room code
+- `POST /rooms/{id}/join-direct` - Join phòng public bằng ID
+- `DELETE /rooms/{id}/leave` - Rời phòng
+- `GET /rooms/{id}/players` - Lấy danh sách players
+- `GET /rooms/public` - Lấy danh sách phòng public
+- `GET /rooms/my-rooms` - Lấy phòng của user
+
+### Topic Management
+- `GET /topics` - Lấy danh sách topics
+- `POST /topics` - Tạo topic mới
+- `PUT /topics/{id}` - Cập nhật topic
+- `DELETE /topics/{id}` - Xóa topic
+
+## Socket.IO Integration
+
+### Connection Setup
+```javascript
+// Connect với JWT token
+import io from 'socket.io-client';
+
+const socket = io('http://localhost:9092', {
+    query: {
+        token: jwtToken
+    },
+    transports: ['websocket']
+});
+
+socket.on('connect', () => {
+    console.log('Connected to Socket.IO server');
+});
+```
+
+### Room Flow
+
+#### 1. Tạo phòng (REST API)
+```javascript
+// POST /api/v1/rooms
+const createRoom = async () => {
+    const response = await fetch('/api/v1/rooms', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+            roomName: "My Room",
+            roomMode: "BATTLE_ROYAL", // hoặc "ONE_VS_ONE"
+            topicId: 1,
+            isPrivate: false,
+            maxPlayers: 10,
+            questionCount: 10,
+            countdownTime: 30
+        })
+    });
+    
+    const room = await response.json();
+    // Tự động vào waiting room
+    enterWaitingRoom(room.data.id);
+};
+```
+
+#### 2. Vào Waiting Room (Socket.IO)
+```javascript
+const enterWaitingRoom = (roomCode) => {
+    // Join room
+    socket.emit('join-room', {
+        roomCode: roomCode
+    });
+    
+    // Listen for room events
+    socket.on('player-joined', handlePlayerJoined);
+    socket.on('player-left', handlePlayerLeft);
+    socket.on('game-started', handleGameStarted);
+    
+    // Get current players
+    socket.emit('get-players', { roomId: roomId });
+};
+```
+
+#### 3. Handle Real-time Events
+```javascript
+// Player events
+socket.on('player-joined', (data) => {
+    console.log(`User ${data.userId} joined`);
+    updatePlayerList();
+});
+
+socket.on('player-left', (data) => {
+    console.log(`User ${data.userId} left`);
+    updatePlayerList();
+});
+
+socket.on('player-kicked', (data) => {
+    console.log(`Player ${data.kickedPlayerId} was kicked`);
+    updatePlayerList();
+});
+
+socket.on('game-started', (data) => {
+    console.log('Game started!');
+    navigateToGame();
+});
+```
+
+### Socket.IO Events
+
+#### Player Actions
+```javascript
+// Rời phòng
+socket.emit('leave-room', {
+    roomId: roomId
+});
+
+// Lấy danh sách players
+socket.emit('get-players', {
+    roomId: roomId
+});
+```
+
+#### Host Actions
+```javascript
+// Kick player
+socket.emit('kick-player', {
+    roomId: roomId,
+    playerId: playerId,
+    reason: "Reason for kick"
+});
+
+// Bắt đầu game
+socket.emit('start-game', {
+    roomId: roomId
+});
+```
+
+### Socket.IO Event Listeners
+- `player-joined` - Player joins room
+- `player-left` - Player leaves room
+- `player-kicked` - Player gets kicked
+- `game-started` - Game begins
+- `room-players` - Room players list
+- `next-question` - Next question in game
+- `answer-submitted` - Answer submission result
+- `game-finished` - Game completion
+
+### Game Events (After Start)
+```javascript
+// Listen for game events
+socket.on('next-question', (data) => {
+    displayQuestion(data.question);
+});
+
+socket.on('game-finished', (data) => {
+    showResults(data.result);
+});
+
+socket.on('answer-submitted', (data) => {
+    updateScoreboard(data);
+});
+
+// Submit answer
+socket.emit('submit-answer', {
+    roomId: roomId,
+    questionId: questionId,
+    answerId: answerId,
+    timeTaken: timeTaken
+});
+
+// Next question (Host only)
+socket.emit('next-question', {
+    roomId: roomId
+});
+```
+
+## Room States
+- **WAITING** - Chờ players join
+- **PLAYING** - Đang chơi game
+- **FULL** - Đã đủ players
+- **FINISHED** - Game đã kết thúc
+- **ARCHIVED** - Phòng đã được lưu trữ
+
 ## Testing
 
 ### Chạy tests
@@ -233,6 +416,10 @@ Logs được lưu tại: `logs/application.log`
 - [API Documentation](API_DOCUMENTATION.md)
 - [Architecture Guidelines](rules/architecture.markdown)
 - [Service Guidelines](rules/service-guidelines.markdown)
+
+### WebSocket Guide
+- [WebSocket Integration](WEBSOCKET_GUIDE.md)
+- [Room Management Flow](docs/room-flow.md)
 
 ### Contact
 - Email: support@quizizz.com

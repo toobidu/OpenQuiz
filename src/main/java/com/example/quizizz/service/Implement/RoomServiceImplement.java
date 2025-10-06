@@ -1,31 +1,33 @@
 package com.example.quizizz.service.Implement;
 
+import com.corundumstudio.socketio.SocketIOServer;
 import com.example.quizizz.common.constants.MessageCode;
 import com.example.quizizz.common.constants.RoomMode;
 import com.example.quizizz.common.constants.RoomStatus;
 import com.example.quizizz.common.exception.ApiException;
 import com.example.quizizz.mapper.RoomMapper;
+import com.example.quizizz.mapper.RoomPlayerMapper;
 import com.example.quizizz.model.dto.room.*;
+import com.example.quizizz.model.entity.Room;
+import com.example.quizizz.model.entity.RoomPlayers;
+import com.example.quizizz.model.entity.User;
+import com.example.quizizz.repository.RoomPlayerRepository;
+import com.example.quizizz.repository.RoomRepository;
+import com.example.quizizz.repository.TopicRepository;
+import com.example.quizizz.repository.UserRepository;
+import com.example.quizizz.service.Interface.IRoomService;
+import com.example.quizizz.util.RoomCodeGenerator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import com.example.quizizz.model.entity.*;
-import com.example.quizizz.repository.*;
-import com.example.quizizz.service.Interface.IRoomService;
-
-import com.example.quizizz.util.RoomCodeGenerator;
-import com.example.quizizz.mapper.RoomPlayerMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -36,6 +38,8 @@ public class RoomServiceImplement implements IRoomService {
     private final RoomRepository roomRepository;
     private final RoomPlayerRepository roomPlayerRepository;
     private final UserRepository userRepository;
+    private final TopicRepository topicRepository;
+    private final SocketIOServer socketIOServer;
 
     private final RoomMapper roomMapper;
     private final RoomPlayerMapper roomPlayerMapper;
@@ -64,7 +68,14 @@ public class RoomServiceImplement implements IRoomService {
         hostPlayer.setStatus("ACTIVE");
         roomPlayerRepository.save(hostPlayer);
 
-        return roomMapper.toResponse(savedRoom);
+        log.info("Room {} created successfully by user {}", savedRoom.getId(), userId);
+
+        RoomResponse roomResponse = mapToRoomResponse(savedRoom);
+
+        // 🔥 Broadcast roomCreated to all clients on RoomPage
+        broadcastRoomCreated(roomResponse);
+
+        return roomResponse;
     }
 
     @Override
@@ -72,8 +83,12 @@ public class RoomServiceImplement implements IRoomService {
         Room room = roomRepository.findByRoomCode(request.getRoomCode())
                 .orElseThrow(() -> new ApiException(MessageCode.ROOM_NOT_FOUND));
 
-        if (!room.getStatus().equals(RoomStatus.WAITING.name())) {
+        if (room.getStatus().equals(RoomStatus.PLAYING.name()) || room.getStatus().equals(RoomStatus.FINISHED.name())) {
             throw new ApiException(MessageCode.ROOM_ALREADY_STARTED);
+        }
+
+        if (room.getStatus().equals(RoomStatus.FULL.name())) {
+            throw new ApiException(MessageCode.ROOM_FULL);
         }
 
         Integer currentPlayers = roomPlayerRepository.countPlayersInRoom(room.getId());
@@ -99,7 +114,12 @@ public class RoomServiceImplement implements IRoomService {
         player.setStatus("ACTIVE");
         roomPlayerRepository.save(player);
 
-        return roomMapper.toResponse(room);
+        // Cập nhật trạng thái phòng nếu đủ người
+        updateRoomStatus(room);
+
+        RoomResponse roomResponse = mapToRoomResponse(room);
+        broadcastRoomUpdated(roomResponse);
+        return roomResponse;
     }
 
     @Override
@@ -115,6 +135,14 @@ public class RoomServiceImplement implements IRoomService {
             handleHostLeaving(room);
         } else {
             roomPlayerRepository.deleteByRoomIdAndUserId(roomId, userId);
+            updateRoomStatus(room);
+        }
+
+        Room roomAfterLeave = roomRepository.findById(roomId).orElse(null);
+        if (roomAfterLeave != null) {
+            broadcastRoomUpdated(mapToRoomResponse(roomAfterLeave));
+        } else {
+            broadcastRoomDeleted(roomId);
         }
     }
 
@@ -129,16 +157,15 @@ public class RoomServiceImplement implements IRoomService {
                 .map(player -> {
                     User user = userRepository.findById(player.getUserId())
                             .orElse(null);
-                    return user != null ? 
-                            roomPlayerMapper.toResponse(player, user) : 
-                            roomPlayerMapper.toResponse(player);
+                    return user != null ? roomPlayerMapper.toResponse(player, user)
+                            : roomPlayerMapper.toResponse(player);
                 })
                 .collect(Collectors.toList());
     }
 
     @Override
     public void kickPlayer(Long roomId, KickPlayerRequest request, Long hostId) {
-        roomRepository.findById(roomId)
+        Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ApiException(MessageCode.ROOM_NOT_FOUND));
 
         if (!isRoomHost(roomId, hostId)) {
@@ -156,6 +183,8 @@ public class RoomServiceImplement implements IRoomService {
         RoomPlayers player = roomPlayerRepository.findByRoomIdAndUserId(roomId, request.getPlayerId()).get();
         player.setStatus("KICKED");
         roomPlayerRepository.save(player);
+
+        broadcastRoomUpdated(mapToRoomResponse(room));
     }
 
     @Override
@@ -208,10 +237,9 @@ public class RoomServiceImplement implements IRoomService {
             roomPlayerRepository.deleteByRoomId(room.getId());
             roomRepository.delete(room);
         } else {
-            // Case 2: Phòng đã có lịch sử game -> Archive
+            // Case 2: Phòng đã có lịch sử game -> Archive và xóa players
             room.setStatus(RoomStatus.ARCHIVED.name());
             roomRepository.save(room);
-            // Giữ lại room và xóa players
             roomPlayerRepository.deleteByRoomId(room.getId());
         }
     }
@@ -223,6 +251,25 @@ public class RoomServiceImplement implements IRoomService {
 
     @Override
     public void deleteRoom(Long roomId, Long userId) {
+        // Kiểm tra phòng tồn tại
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ApiException(MessageCode.ROOM_NOT_FOUND));
+
+        // Kiểm tra quyền xóa phòng (chỉ owner mới được xóa)
+        if (!room.getOwnerId().equals(userId)) {
+            throw new ApiException(MessageCode.UNAUTHORIZED);
+        }
+
+        // Xóa tất cả players trong phòng trước (3NF - manual delete)
+        roomPlayerRepository.deleteByRoomId(roomId);
+
+        // Xóa phòng
+        roomRepository.deleteById(roomId);
+
+        log.info("Room {} deleted by user {} - room players manually deleted", roomId, userId);
+
+        // 🔥 Broadcast roomDeleted to all clients on RoomPage
+        broadcastRoomDeleted(roomId);
     }
 
     @Override
@@ -230,7 +277,7 @@ public class RoomServiceImplement implements IRoomService {
     public RoomResponse getRoomById(Long roomId) {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ApiException(MessageCode.ROOM_NOT_FOUND));
-        return roomMapper.toResponse(room);
+        return mapToRoomResponse(room);
     }
 
     @Override
@@ -238,34 +285,7 @@ public class RoomServiceImplement implements IRoomService {
     public RoomResponse getRoomByCode(String roomCode) {
         Room room = roomRepository.findByRoomCode(roomCode)
                 .orElseThrow(() -> new ApiException(MessageCode.ROOM_NOT_FOUND));
-        return roomMapper.toResponse(room);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<RoomResponse> getRoomsByOwner(Long ownerId) {
-        List<Room> rooms = roomRepository.findByOwnerId(ownerId);
-        return rooms.stream()
-                .map(roomMapper::toResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<RoomResponse> getPublicRoomsByStatus(RoomStatus status) {
-        List<Room> rooms = roomRepository.findPublicRoomsByStatus(status);
-        return rooms.stream()
-                .map(roomMapper::toResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<RoomResponse> searchPublicRooms(String roomName) {
-        List<Room> rooms = roomRepository.findPublicRoomsByRoomNameContaining(roomName);
-        return rooms.stream()
-                .map(roomMapper::toResponse)
-                .collect(Collectors.toList());
+        return mapToRoomResponse(room);
     }
 
     @Override
@@ -286,14 +306,14 @@ public class RoomServiceImplement implements IRoomService {
 
         RoomPlayers oldHost = roomPlayerRepository.findByRoomIdAndUserId(roomId, currentHostId).get();
         RoomPlayers newHost = roomPlayerRepository.findByRoomIdAndUserId(roomId, newHostId).get();
-        
+
         oldHost.setIsHost(false);
         newHost.setIsHost(true);
-        
+
         roomPlayerRepository.save(oldHost);
         roomPlayerRepository.save(newHost);
 
-        return roomMapper.toResponse(updatedRoom);
+        return mapToRoomResponse(updatedRoom);
     }
 
     @Override
@@ -338,37 +358,32 @@ public class RoomServiceImplement implements IRoomService {
     }
 
     @Override
-    public PagedRoomResponse getPublicRoomsWithPagination(RoomStatus status, int page, int size, String search) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Room> roomPage;
-        
-        if (search != null && !search.trim().isEmpty()) {
-            roomPage = roomRepository.findPublicRoomsByStatusAndSearch(status, search.trim(), pageable);
-        } else {
-            roomPage = roomRepository.findPublicRoomsByStatusWithPagination(status, pageable);
-        }
-        
-        return mapToPagedResponse(roomPage);
-    }
-
-    @Override
     public PagedRoomResponse getMyRoomsWithPagination(Long userId, int page, int size, String search) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Room> roomPage;
-        
+
         if (search != null && !search.trim().isEmpty()) {
             roomPage = roomRepository.findByOwnerIdAndSearch(userId, search.trim(), pageable);
         } else {
             roomPage = roomRepository.findByOwnerIdWithPagination(userId, pageable);
         }
-        
+
         return mapToPagedResponse(roomPage);
     }
 
     @Override
-    public PagedRoomResponse getAllRoomsWithPagination(RoomStatus status, int page, int size, String search) {
-        // Tạm thời return public rooms, cần implement query cho all rooms
-        return getPublicRoomsWithPagination(status, page, size, search);
+    public PagedRoomResponse getAllRoomsSimple(int page, int size, String search) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Room> roomPage;
+
+        // Chỉ lấy phòng WAITING, không filter phức tạp
+        if (search != null && !search.trim().isEmpty()) {
+            roomPage = roomRepository.findAllRoomsByStatusAndSearch(RoomStatus.WAITING.name(), search.trim(), pageable);
+        } else {
+            roomPage = roomRepository.findAllRoomsByStatusWithPagination(RoomStatus.WAITING.name(), pageable);
+        }
+
+        return mapToPagedResponse(roomPage);
     }
 
     @Override
@@ -380,8 +395,12 @@ public class RoomServiceImplement implements IRoomService {
             throw new ApiException(MessageCode.ROOM_PERMISSION_DENIED);
         }
 
-        if (!room.getStatus().equals(RoomStatus.WAITING.name())) {
+        if (room.getStatus().equals(RoomStatus.PLAYING.name()) || room.getStatus().equals(RoomStatus.FINISHED.name())) {
             throw new ApiException(MessageCode.ROOM_ALREADY_STARTED);
+        }
+
+        if (room.getStatus().equals(RoomStatus.FULL.name())) {
+            throw new ApiException(MessageCode.ROOM_FULL);
         }
 
         Integer currentPlayers = roomPlayerRepository.countPlayersInRoom(room.getId());
@@ -403,17 +422,33 @@ public class RoomServiceImplement implements IRoomService {
         player.setStatus("ACTIVE");
         roomPlayerRepository.save(player);
 
-        return roomMapper.toResponse(room);
+        updateRoomStatus(room);
+
+        RoomResponse roomResponse = mapToRoomResponse(room);
+        broadcastRoomUpdated(roomResponse);
+
+        return roomResponse;
     }
 
-    @Override
-    public List<RoomResponse> searchRooms(String query, RoomStatus status) {
-        // Tạm thời search trong public rooms
-        List<Room> rooms = roomRepository.findPublicRoomsByRoomNameContaining(query);
-        return rooms.stream()
-                .filter(room -> room.getStatus().equals(status.name()))
-                .map(roomMapper::toResponse)
-                .collect(Collectors.toList());
+    /**
+     * Cập nhật trạng thái phòng dựa trên số lượng người chơi
+     */
+    private void updateRoomStatus(Room room) {
+        if (room.getStatus().equals(RoomStatus.PLAYING.name()) ||
+                room.getStatus().equals(RoomStatus.FINISHED.name()) ||
+                room.getStatus().equals(RoomStatus.ARCHIVED.name())) {
+            return; // Không thay đổi trạng thái nếu đang chơi hoặc đã kết thúc
+        }
+
+        Integer currentPlayers = roomPlayerRepository.countPlayersInRoom(room.getId());
+
+        if (currentPlayers >= room.getMaxPlayers()) {
+            room.setStatus(RoomStatus.FULL.name());
+        } else {
+            room.setStatus(RoomStatus.WAITING.name());
+        }
+
+        roomRepository.save(room);
     }
 
     @Override
@@ -421,14 +456,14 @@ public class RoomServiceImplement implements IRoomService {
         List<Room> rooms = roomRepository.findPublicRoomsByRoomNameContaining(query);
         return rooms.stream()
                 .limit(10)
-                .map(roomMapper::toResponse)
+                .map(this::mapToRoomResponse)
                 .collect(Collectors.toList());
     }
 
     private PagedRoomResponse mapToPagedResponse(Page<Room> roomPage) {
         PagedRoomResponse response = new PagedRoomResponse();
         response.setRooms(roomPage.getContent().stream()
-                .map(roomMapper::toResponse)
+                .map(this::mapToRoomResponse)
                 .collect(Collectors.toList()));
         response.setCurrentPage(roomPage.getNumber());
         response.setTotalPages(roomPage.getTotalPages());
@@ -439,11 +474,78 @@ public class RoomServiceImplement implements IRoomService {
         return response;
     }
 
+    /**
+     * Map Room entity to RoomResponse với currentPlayers và topicName
+     */
+    private RoomResponse mapToRoomResponse(Room room) {
+        RoomResponse response = roomMapper.toResponse(room);
+
+        // Set current players count
+        Integer currentPlayers = roomPlayerRepository.countPlayersInRoom(room.getId());
+        response.setCurrentPlayers(currentPlayers);
+
+        // Load and set topic name
+        if (room.getTopicId() != null) {
+            topicRepository.findById(room.getTopicId())
+                    .ifPresent(topic -> response.setTopicName(topic.getName()));
+        }
+
+        // Load and set owner username
+        if (room.getOwnerId() != null) {
+            userRepository.findById(room.getOwnerId())
+                    .ifPresent(user -> response.setOwnerUsername(user.getUsername()));
+        }
+
+        return response;
+    }
+
     private String generateUniqueRoomCode() {
         String roomCode;
         do {
             roomCode = roomCodeGenerator.generateRoomCode();
         } while (roomRepository.existsByRoomCode(roomCode));
         return roomCode;
+    }
+
+    /**
+     * Broadcast room created event to clients in "room-list"
+     */
+    private void broadcastRoomCreated(RoomResponse room) {
+        try {
+            socketIOServer.getRoomOperations("room-list").sendEvent("roomCreated", Map.of(
+                    "room", room,
+                    "timestamp", System.currentTimeMillis()));
+            log.info("📡 Broadcasted roomCreated event for room {} to room-list", room.getId());
+        } catch (Exception e) {
+            log.error("Failed to broadcast roomCreated: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Broadcast room deleted event to clients in "room-list"
+     */
+    private void broadcastRoomDeleted(Long roomId) {
+        try {
+            socketIOServer.getRoomOperations("room-list").sendEvent("roomDeleted", Map.of(
+                    "roomId", roomId,
+                    "timestamp", System.currentTimeMillis()));
+            log.info("📡 Broadcasted roomDeleted event for room {}", roomId);
+        } catch (Exception e) {
+            log.error("Failed to broadcast roomDeleted: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Broadcast room updated event to clients in "room-list"
+     */
+    private void broadcastRoomUpdated(RoomResponse room) {
+        try {
+            socketIOServer.getRoomOperations("room-list").sendEvent("roomUpdated", Map.of(
+                    "room", room,
+                    "timestamp", System.currentTimeMillis()));
+            log.info("📡 Broadcasted roomUpdated event for room {}", room.getId());
+        } catch (Exception e) {
+            log.error("Failed to broadcast roomUpdated: {}", e.getMessage());
+        }
     }
 }

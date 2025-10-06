@@ -23,6 +23,5 @@ public class CreateRoomRequest {
     private Boolean isPrivate = false;
     private Integer maxPlayers;
     private Integer questionCount = 10;
-    private String questionType;
     private Integer countdownTime = 30;
 }
