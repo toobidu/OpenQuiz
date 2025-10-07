@@ -97,7 +97,9 @@ public class RoomServiceImplement implements IRoomService {
         }
 
         if (roomPlayerRepository.existsByRoomIdAndUserId(room.getId(), userId)) {
-            throw new ApiException(MessageCode.ROOM_ALREADY_JOINED);
+            // User already in room - return success with room data
+            log.info("User {} already in room {}, returning room data", userId, room.getId());
+            return mapToRoomResponse(room);
         }
 
         if (roomPlayerRepository.isUserKicked(room.getId(), userId)) {
