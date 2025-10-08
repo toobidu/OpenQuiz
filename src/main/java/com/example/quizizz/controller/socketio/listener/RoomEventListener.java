@@ -22,21 +22,25 @@ public class RoomEventListener {
 
         try {
             if (data.getRoomId() != null) {
-                // Verify room exists
-                var roomResponse = handler.getRoomService().getRoomById(data.getRoomId());
+                // Join room in database first
+                var roomResponse = handler.getRoomService().joinRoomById(data.getRoomId(), userId);
                 
                 // Join Socket.IO room
                 client.joinRoom("room-" + data.getRoomId());
                 handler.getSessionManager().addRoomSession(client.getSessionId().toString(), data.getRoomId());
 
-                // Always send success response
-                client.sendEvent("join-room-success", Map.of(
-                        "success", true,
-                        "roomId", data.getRoomId(),
-                        "room", roomResponse,
-                        "message", "Connected to room successfully"));
+                String username = handler.getUserRepository().findById(userId)
+                        .map(user -> user.getUsername()).orElse("Unknown");
 
-                // Always broadcast current players list
+                // Broadcast player-joined event
+                handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
+                        .sendEvent("player-joined", Map.of(
+                                "roomId", data.getRoomId(),
+                                "userId", userId,
+                                "username", username
+                        ));
+
+                // Broadcast updated players list
                 var players = handler.getRoomService().getRoomPlayers(data.getRoomId());
                 handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
                         .sendEvent("room-players", Map.of(
@@ -44,7 +48,14 @@ public class RoomEventListener {
                                 "players", players
                         ));
 
-                log.info("User {} connected to Socket.IO room {}", userId, data.getRoomId());
+                // Send success response
+                client.sendEvent("join-room-success", Map.of(
+                        "success", true,
+                        "roomId", data.getRoomId(),
+                        "room", roomResponse,
+                        "message", "Joined room successfully"));
+
+                log.info("User {} joined room {} via Socket.IO", userId, data.getRoomId());
                 return;
             }
 
@@ -86,20 +97,34 @@ public class RoomEventListener {
                     return;
                 } catch (Exception roomJoinError) {
                     log.error("Error joining room via roomCode: {}", roomJoinError.getMessage());
-                    // Try to get room info without joining
-                    try {
-                        var roomResponse = handler.getRoomService().getRoomByCode(data.getRoomCode());
-                        client.joinRoom("room-" + roomResponse.getId());
-                        handler.getSessionManager().addRoomSession(client.getSessionId().toString(), roomResponse.getId());
-                        
-                        client.sendEvent("join-room-success", Map.of(
-                                "success", true,
-                                "room", roomResponse,
-                                "message", "Connected to room successfully"));
-                        return;
-                    } catch (Exception getRoomError) {
-                        throw roomJoinError; // Re-throw original error
+                    
+                    // If user already joined, treat as success
+                    if (roomJoinError.getMessage().contains("already joined")) {
+                        log.info("User {} already joined room, connecting to Socket.IO", userId);
+                        try {
+                            var roomResponse = handler.getRoomService().getRoomByCode(data.getRoomCode());
+                            client.joinRoom("room-" + roomResponse.getId());
+                            handler.getSessionManager().addRoomSession(client.getSessionId().toString(), roomResponse.getId());
+                            
+                            // Broadcast current players list
+                            var players = handler.getRoomService().getRoomPlayers(roomResponse.getId());
+                            handler.getSocketIOServer().getRoomOperations("room-" + roomResponse.getId())
+                                    .sendEvent("room-players", Map.of(
+                                            "roomId", roomResponse.getId(),
+                                            "players", players
+                                    ));
+                            
+                            client.sendEvent("join-room-success", Map.of(
+                                    "success", true,
+                                    "room", roomResponse,
+                                    "message", "Connected to room successfully"));
+                            return;
+                        } catch (Exception getRoomError) {
+                            log.error("Failed to get room info: {}", getRoomError.getMessage());
+                        }
                     }
+                    
+                    throw roomJoinError; // Re-throw original error
                 }
             }
 
@@ -115,23 +140,38 @@ public class RoomEventListener {
 
     public void handleLeaveRoom(SocketIOClient client, LeaveRoomData data, SocketIOEventHandler handler) {
         Long userId = getUserId(client, handler);
-        if (userId == null)
+        if (userId == null) {
+            log.error("❌ Leave room failed: userId is null");
             return;
+        }
+
+        log.info("🚪 User {} attempting to leave room {}", userId, data.getRoomId());
 
         try {
+            // Leave room in database
+            log.info("📤 Calling roomService.leaveRoom for user {} in room {}", userId, data.getRoomId());
             handler.getRoomService().leaveRoom(data.getRoomId(), userId);
+            log.info("✅ Successfully left room in database");
 
+            // Leave Socket.IO room
             client.leaveRoom("room-" + data.getRoomId());
             handler.getSessionManager().removeRoomSession(client.getSessionId().toString());
+            log.info("✅ Left Socket.IO room and removed session");
 
+            String username = handler.getUserRepository().findById(userId)
+                    .map(user -> user.getUsername()).orElse("Unknown");
+
+            log.info("📡 Broadcasting player-left event for user {} ({})", userId, username);
             handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
                     .sendEvent("player-left", Map.of(
                             "roomId", data.getRoomId(),
-                            "userId", userId
+                            "userId", userId,
+                            "username", username
                     ));
 
             // broadcast updated players list
             var players = handler.getRoomService().getRoomPlayers(data.getRoomId());
+            log.info("📡 Broadcasting room-players event with {} players", players.size());
             handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
                     .sendEvent("room-players", Map.of(
                             "roomId", data.getRoomId(),
@@ -139,15 +179,16 @@ public class RoomEventListener {
                     ));
 
             // Send success response to the client who left
+            log.info("✅ Sending leave-room-success to client");
             client.sendEvent("leave-room-success", Map.of(
                     "success", true,
                     "roomId", data.getRoomId(),
                     "message", "Left room successfully"));
 
-            log.info("User {} left room {}", userId, data.getRoomId());
+            log.info("🎉 User {} successfully left room {}", userId, data.getRoomId());
 
         } catch (Exception e) {
-            log.error("Error leaving room: {}", e.getMessage());
+            log.error("❌ Error leaving room {}: {}", data.getRoomId(), e.getMessage(), e);
             client.sendEvent("leave-room-error", Map.of(
                     "success", false,
                     "message", e.getMessage()));

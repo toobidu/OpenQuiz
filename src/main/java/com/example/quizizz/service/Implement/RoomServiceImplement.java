@@ -322,15 +322,14 @@ public class RoomServiceImplement implements IRoomService {
             socketIOServer.getRoomOperations("room-" + roomId)
                     .sendEvent("host-changed", Map.of(
                             "roomId", roomId,
-                            "newHostId", newHostId
-                    ));
+                            "newHostId", newHostId));
             List<RoomPlayerResponse> players = getRoomPlayers(roomId);
             socketIOServer.getRoomOperations("room-" + roomId)
                     .sendEvent("room-players", Map.of(
                             "roomId", roomId,
-                            "players", players
-                    ));
-        } catch (Exception ignored) {}
+                            "players", players));
+        } catch (Exception ignored) {
+        }
 
         return response;
     }
@@ -428,7 +427,10 @@ public class RoomServiceImplement implements IRoomService {
         }
 
         if (roomPlayerRepository.existsByRoomIdAndUserId(room.getId(), userId)) {
-            throw new ApiException(MessageCode.ROOM_ALREADY_JOINED);
+            // User already in room - return success with room data (same as joinRoom
+            // method)
+            log.info("User {} already in room {}, returning room data", userId, room.getId());
+            return mapToRoomResponse(room);
         }
 
         Integer nextJoinOrder = roomPlayerRepository.getMaxJoinOrderInRoom(room.getId()) + 1;
