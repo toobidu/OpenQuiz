@@ -1,14 +1,20 @@
 package com.example.quizizz.model.entity;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "user_answers")
@@ -26,14 +32,11 @@ public class UserAnswer implements Serializable {
     @Column(name = "question_id", nullable = false)
     private Long questionId;
 
-    @Column(name = "answer_id", nullable = false)
-    private Long answerId;
-
-    @Column(name = "room_id")
+    @Column(name = "room_id", nullable = false)
     private Long roomId;
 
-    @Column(name = "game_session_id")
-    private Long gameSessionId;
+    @Column(name = "answer_id")
+    private Long answerId;
 
     @Column(name = "is_correct", nullable = false)
     private Boolean isCorrect;

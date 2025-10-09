@@ -254,10 +254,34 @@ public class RoomEventListener {
                     "isHost", true
             );
 
+            // Broadcast game started event to all players
             handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
                     .sendEvent("game-started", Map.of(
                             "roomId", data.getRoomId(),
                             "gameState", gameState));
+
+            // Get and send first question immediately
+            try {
+                var firstQuestion = handler.getGameService().getNextQuestion(data.getRoomId());
+                if (firstQuestion != null) {
+                    handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
+                        .sendEvent("next-question", Map.of(
+                            "roomId", data.getRoomId(),
+                            "questionId", firstQuestion.getQuestionId(),
+                            "questionText", firstQuestion.getQuestionText(),
+                            "answers", firstQuestion.getAnswers().stream().map(a -> Map.of(
+                                "id", a.getId(),
+                                "text", a.getText()
+                            )).collect(java.util.stream.Collectors.toList()),
+                            "imageUrl", null,
+                            "timeLimit", firstQuestion.getTimeLimit(),
+                            "currentQuestionNumber", firstQuestion.getQuestionNumber(),
+                            "totalQuestions", firstQuestion.getTotalQuestions()
+                        ));
+                }
+            } catch (Exception questionError) {
+                log.error("Failed to get first question: {}", questionError.getMessage());
+            }
 
             // Send success response to the client who started the game
             client.sendEvent("start-game-success", Map.of(

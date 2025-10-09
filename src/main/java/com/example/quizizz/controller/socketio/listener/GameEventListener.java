@@ -39,7 +39,8 @@ public class GameEventListener {
                     "userId", userId,
                     "questionId", data.getQuestionId(),
                     "isCorrect", result.getIsCorrect(),
-                    "score", result.getScore()
+                    "score", result.getScore(),
+                    "correctAnswerId", result.getCorrectAnswerId()
                 ));
 
             log.info("User {} submitted answer for question {} in room {}", userId, data.getQuestionId(), data.getRoomId());
@@ -72,7 +73,8 @@ public class GameEventListener {
                     "userId", userId,
                     "questionId", data.getQuestionId(),
                     "isCorrect", result.getIsCorrect(),
-                    "score", result.getScore()
+                    "score", result.getScore(),
+                    "correctAnswerId", result.getCorrectAnswerId()
                 ));
 
             log.info("[submitAnswer] user {} answered q {} in room {}", userId, data.getQuestionId(), roomId);
@@ -136,7 +138,10 @@ public class GameEventListener {
                         "roomId", data.getRoomId(),
                         "questionId", nextQuestion.getQuestionId(),
                         "questionText", nextQuestion.getQuestionText(),
-                        "options", nextQuestion.getAnswers().stream().map(a -> a.getText()).collect(Collectors.toList()),
+                        "answers", nextQuestion.getAnswers().stream().map(a -> Map.of(
+                            "id", a.getId(),
+                            "text", a.getText()
+                        )).collect(Collectors.toList()),
                         "imageUrl", null,
                         "timeLimit", nextQuestion.getTimeLimit(),
                         "currentQuestionNumber", nextQuestion.getQuestionNumber(),
