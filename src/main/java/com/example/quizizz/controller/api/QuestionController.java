@@ -28,7 +28,7 @@ public class QuestionController {
             @RequestParam(required = false) Long topicId,
             @RequestParam(required = false) String questionType,
             @RequestParam(defaultValue = "10") int count) {
-        
+
         List<QuestionWithAnswersResponse> questions = questionService.getRandomQuestionsWithAnswers(topicId, questionType, count);
         return ResponseEntity.ok(ApiResponse.success(MessageCode.SUCCESS, questions));
     }
@@ -40,7 +40,7 @@ public class QuestionController {
             @RequestParam(required = false) Long topicId,
             @RequestParam(required = false) String questionType,
             @RequestParam(defaultValue = "10") int count) {
-        
+
         List<QuestionWithAnswersResponse> questions = questionService.getRandomQuestionsForPlayer(topicId, questionType, count, playerId);
         return ResponseEntity.ok(ApiResponse.success(MessageCode.SUCCESS, questions));
     }
@@ -50,7 +50,7 @@ public class QuestionController {
     public ResponseEntity<ApiResponse<Long>> countAvailableQuestions(
             @RequestParam(required = false) Long topicId,
             @RequestParam(required = false) String questionType) {
-        
+
         long count = questionService.countAvailableQuestions(topicId, questionType);
         return ResponseEntity.ok(ApiResponse.success(MessageCode.SUCCESS, count));
     }
@@ -75,7 +75,7 @@ public class QuestionController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('question:manage')")
     public ResponseEntity<ApiResponse<QuestionResponse>> updateQuestion(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestBody UpdateQuestionRequest request) {
         QuestionResponse response = questionService.updateQuestion(id, request);
         return ResponseEntity.ok(ApiResponse.success(MessageCode.SUCCESS, response));

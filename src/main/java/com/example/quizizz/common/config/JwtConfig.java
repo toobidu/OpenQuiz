@@ -1,8 +1,11 @@
 package com.example.quizizz.common.config;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+@Getter
 @Configuration
 public class JwtConfig {
     @Value("${jwt.secret-key}")
@@ -14,15 +17,4 @@ public class JwtConfig {
     @Value("${jwt.refresh-expiration}")
     private Long refreshExpiration;
 
-    public String getSecretKey() {
-        return secretKey;
-    }
-
-    public Long getAccessExpiration() {
-        return accessExpiration;
-    }
-
-    public Long getRefreshExpiration() {
-        return refreshExpiration;
-    }
 }

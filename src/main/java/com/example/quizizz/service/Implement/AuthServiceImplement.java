@@ -156,7 +156,7 @@ public class AuthServiceImplement implements IAuthService {
         try {
             // 1. Tìm user theo email
             User user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND.value(), 
+                    .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND.value(),
                             MessageCode.USER_NOT_FOUND, "User not found with email: " + request.getEmail()));
 
             // 2. Generate password mới
@@ -172,8 +172,8 @@ public class AuthServiceImplement implements IAuthService {
 
             // 5. Gửi email với password mới
             boolean emailSent = emailService.sendPasswordResetEmail(
-                    request.getEmail(), 
-                    user.getUsername(), 
+                    request.getEmail(),
+                    user.getUsername(),
                     newPassword
             );
 
@@ -196,18 +196,18 @@ public class AuthServiceImplement implements IAuthService {
     public ChangePasswordResponse changePassword(Long userId, ChangePasswordRequest request) {
         // Validate new password and confirm password match
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new ApiException(HttpStatus.BAD_REQUEST.value(), 
+            throw new ApiException(HttpStatus.BAD_REQUEST.value(),
                     MessageCode.AUTH_PASSWORD_MISMATCH, "New password and confirm password do not match");
         }
 
         // Find user
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND.value(), 
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND.value(),
                         MessageCode.USER_NOT_FOUND, "User not found"));
 
         // Verify current password
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new ApiException(HttpStatus.BAD_REQUEST.value(), 
+            throw new ApiException(HttpStatus.BAD_REQUEST.value(),
                     MessageCode.AUTH_PASSWORD_INCORRECT, "Current password is incorrect");
         }
 
@@ -236,7 +236,7 @@ public class AuthServiceImplement implements IAuthService {
             redisService.deleteUserPermissionsCache(userId);
 
             // Note: Trong thực tế, ta cần blacklist tất cả JWT tokens của user này
-            // Nhưng vì JWT là stateless, cách đơn giản nhất là thay đổi secret key hoặc 
+            // Nhưng vì JWT là stateless, cách đơn giản nhất là thay đổi secret key hoặc
             // lưu thời gian logout trong database và kiểm tra khi validate token
             // Ở đây ta sẽ implement cách đơn giản bằng cách lưu thời gian logout
 

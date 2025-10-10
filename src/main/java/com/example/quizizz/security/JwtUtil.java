@@ -27,22 +27,22 @@ public class JwtUtil {
     // Tạo access token với custom claims
     public String generateAccessToken(Long userId, String typeAccount, String rank) {
         return createToken(
-            Map.of(
-                "userId", userId,
-                "typeAccount", typeAccount,
-                "rank", rank
-            ),
-            userId.toString(),
-            jwtConfig.getAccessExpiration()
+                Map.of(
+                        "userId", userId,
+                        "typeAccount", typeAccount,
+                        "rank", rank
+                ),
+                userId.toString(),
+                jwtConfig.getAccessExpiration()
         );
     }
 
     // Tạo refresh token chỉ với userId
     public String generateRefreshToken(Long userId) {
         return createToken(
-            Map.of("userId", userId),
-            userId.toString(),
-            jwtConfig.getRefreshExpiration()
+                Map.of("userId", userId),
+                userId.toString(),
+                jwtConfig.getRefreshExpiration()
         );
     }
 

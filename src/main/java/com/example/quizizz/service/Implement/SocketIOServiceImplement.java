@@ -51,10 +51,10 @@ public class SocketIOServiceImplement implements ISocketIOService {
     @Override
     public void notifyRoomUpdate(Long roomId, String eventType, Map<String, Object> data) {
         Map<String, Object> payload = Map.of(
-            "type", eventType,
-            "roomId", roomId,
-            "data", data,
-            "timestamp", System.currentTimeMillis()
+                "type", eventType,
+                "roomId", roomId,
+                "data", data,
+                "timestamp", System.currentTimeMillis()
         );
         sendToRoom(roomId.toString(), "room-update", payload);
     }
@@ -62,10 +62,10 @@ public class SocketIOServiceImplement implements ISocketIOService {
     @Override
     public void notifyGameEvent(Long roomId, String eventType, Map<String, Object> data) {
         Map<String, Object> payload = Map.of(
-            "type", eventType,
-            "roomId", roomId,
-            "data", data,
-            "timestamp", System.currentTimeMillis()
+                "type", eventType,
+                "roomId", roomId,
+                "data", data,
+                "timestamp", System.currentTimeMillis()
         );
         sendToRoom(roomId.toString(), "game-event", payload);
     }
@@ -77,14 +77,14 @@ public class SocketIOServiceImplement implements ISocketIOService {
             if (client != null) {
                 // Send kick notification to user
                 client.sendEvent("kicked-from-room", Map.of(
-                    "roomId", roomId,
-                    "reason", reason,
-                    "timestamp", System.currentTimeMillis()
+                        "roomId", roomId,
+                        "reason", reason,
+                        "timestamp", System.currentTimeMillis()
                 ));
-                
+
                 // Remove from room
                 client.leaveRoom("room-" + roomId);
-                
+
                 log.info("Kicked user session '{}' from room '{}' with reason: {}", sessionId, roomId, reason);
             }
         } catch (Exception e) {

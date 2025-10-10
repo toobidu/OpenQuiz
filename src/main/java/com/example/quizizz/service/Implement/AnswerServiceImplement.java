@@ -16,17 +16,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class AnswerServiceImplement implements IAnswerService {
-    
+
     private final AnswerRepository answerRepository;
     private final AnswerMapper answerMapper;
-    
+
     @Override
     public AnswerResponse createAnswer(CreateAnswerRequest request) {
         Answer answer = answerMapper.toEntity(request);
         Answer savedAnswer = answerRepository.save(answer);
         return answerMapper.toResponse(savedAnswer);
     }
-    
+
     @Override
     public AnswerResponse updateAnswer(Long id, UpdateAnswerRequest request) {
         Answer answer = answerRepository.findById(id)
@@ -35,19 +35,19 @@ public class AnswerServiceImplement implements IAnswerService {
         Answer updatedAnswer = answerRepository.save(answer);
         return answerMapper.toResponse(updatedAnswer);
     }
-    
+
     @Override
     public void deleteAnswer(Long id) {
         answerRepository.deleteById(id);
     }
-    
+
     @Override
     public AnswerResponse getAnswerById(Long id) {
         Answer answer = answerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Answer not found"));
         return answerMapper.toResponse(answer);
     }
-    
+
     @Override
     public List<AnswerResponse> getAnswersByQuestionId(Long questionId) {
         List<Answer> answers = answerRepository.findByQuestionId(questionId);

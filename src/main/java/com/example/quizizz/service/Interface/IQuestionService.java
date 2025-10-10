@@ -7,7 +7,7 @@ public interface IQuestionService {
     List<QuestionWithAnswersResponse> getRandomQuestionsWithAnswers(Long topicId, String questionType, int count);
     List<QuestionWithAnswersResponse> getRandomQuestionsForPlayer(Long topicId, String questionType, int count, Long playerId);
     long countAvailableQuestions(Long topicId, String questionType);
-    
+
     // CRUD operations
     QuestionResponse createQuestion(CreateQuestionRequest request);
     List<QuestionResponse> createBulkQuestions(CreateBulkQuestionsRequest request);

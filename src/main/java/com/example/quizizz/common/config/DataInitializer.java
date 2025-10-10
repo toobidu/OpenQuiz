@@ -31,32 +31,32 @@ public class DataInitializer implements CommandLineRunner {
     @Transactional
     public void run(String... args) throws Exception {
         log.info("Starting data initialization...");
-        
+
         initializePermissions();
         initializeRoles();
         initializeUsers();
         assignRolePermissions();
-        
+
         log.info("Data initialization completed!");
     }
 
     private void initializePermissions() {
         List<Permission> permissions = Arrays.asList(
-            createPermission("user:manage", "Quản lý người dùng và phân quyền"),
-            createPermission("user:manage_profile", "Quản lý hồ sơ cá nhân"),
-            createPermission("role:manage", "Quản lý vai trò hệ thống"),
-            createPermission("permission:manage", "Quản lý quyền hạn"),
-            createPermission("question:manage", "Quản lý câu hỏi"),
-            createPermission("topic:manage", "Quản lý chủ đề"),
-            createPermission("room:manage", "Quản lý phòng chơi"),
-            createPermission("room:join", "Tham gia phòng chơi"),
-            createPermission("room:kick_player", "Kick người chơi khỏi phòng"),
-            createPermission("room:leave", "Rời khỏi phòng"),
-            createPermission("room:invite", "Mời người chơi vào phòng"),
-            createPermission("game:start", "Bắt đầu trò chơi"),
-            createPermission("game:answer", "Trả lời câu hỏi"),
-            createPermission("game:view_score", "Xem điểm số"),
-            createPermission("rank:view", "Xem bảng xếp hạng")
+                createPermission("user:manage", "Quản lý người dùng và phân quyền"),
+                createPermission("user:manage_profile", "Quản lý hồ sơ cá nhân"),
+                createPermission("role:manage", "Quản lý vai trò hệ thống"),
+                createPermission("permission:manage", "Quản lý quyền hạn"),
+                createPermission("question:manage", "Quản lý câu hỏi"),
+                createPermission("topic:manage", "Quản lý chủ đề"),
+                createPermission("room:manage", "Quản lý phòng chơi"),
+                createPermission("room:join", "Tham gia phòng chơi"),
+                createPermission("room:kick_player", "Kick người chơi khỏi phòng"),
+                createPermission("room:leave", "Rời khỏi phòng"),
+                createPermission("room:invite", "Mời người chơi vào phòng"),
+                createPermission("game:start", "Bắt đầu trò chơi"),
+                createPermission("game:answer", "Trả lời câu hỏi"),
+                createPermission("game:view_score", "Xem điểm số"),
+                createPermission("rank:view", "Xem bảng xếp hạng")
         );
 
         permissions.forEach(permission -> {
@@ -70,9 +70,9 @@ public class DataInitializer implements CommandLineRunner {
 
     private void initializeRoles() {
         List<Role> roles = Arrays.asList(
-            createRole("PLAYER", "Người chơi - Có thể tham gia game, quản lý profile cá nhân"),
-            createRole("HOST", "Chủ phòng - Có thể tạo phòng, quản lý game, kick player"),
-            createRole("ADMIN", "Quản trị viên - Toàn quyền quản lý hệ thống")
+                createRole("PLAYER", "Người chơi - Có thể tham gia game, quản lý profile cá nhân"),
+                createRole("HOST", "Chủ phòng - Có thể tạo phòng, quản lý game, kick player"),
+                createRole("ADMIN", "Quản trị viên - Toàn quyền quản lý hệ thống")
         );
 
         roles.forEach(role -> {
@@ -89,7 +89,7 @@ public class DataInitializer implements CommandLineRunner {
         if (!userRepository.findByUsername("admin").isPresent()) {
             User admin = createUser("admin", "admin123", "admin@quizizz.com", "System Administrator", RoleCode.ADMIN.name());
             userRepository.save(admin);
-            
+
             Role adminRole = roleRepository.findByRoleName("ADMIN").get();
             userRoleRepository.save(new UserRole(null, admin.getId(), adminRole.getId(), null, null));
             log.info("Created admin user: admin/admin123");
@@ -99,7 +99,7 @@ public class DataInitializer implements CommandLineRunner {
         if (!userRepository.findByUsername("player").isPresent()) {
             User player = createUser("player", "player123", "player@quizizz.com", "Test Player", RoleCode.PLAYER.name());
             userRepository.save(player);
-            
+
             Role playerRole = roleRepository.findByRoleName("PLAYER").get();
             userRoleRepository.save(new UserRole(null, player.getId(), playerRole.getId(), null, null));
             log.info("Created player user: player/player123");
@@ -113,19 +113,19 @@ public class DataInitializer implements CommandLineRunner {
 
         // PLAYER permissions
         assignPermissionsToRole(playerRole, Arrays.asList(
-            "user:manage_profile", "room:join", "room:leave", "game:answer", "game:view_score", "rank:view"
+                "user:manage_profile", "room:join", "room:leave", "game:answer", "game:view_score", "rank:view"
         ));
 
         // HOST permissions (includes PLAYER + host-specific)
         assignPermissionsToRole(hostRole, Arrays.asList(
-            "user:manage_profile", "room:manage", "room:join", "room:leave", "room:kick_player", 
-            "room:invite", "game:start", "game:answer", "game:view_score", "rank:view"
+                "user:manage_profile", "room:manage", "room:join", "room:leave", "room:kick_player",
+                "room:invite", "game:start", "game:answer", "game:view_score", "rank:view"
         ));
 
         // ADMIN permissions (all permissions)
         List<Permission> allPermissions = permissionRepository.findAll();
         allPermissions.forEach(permission -> {
-            if (rolePermissionRepository.findByRoleIdAndPermissionIdIn(adminRole.getId(), 
+            if (rolePermissionRepository.findByRoleIdAndPermissionIdIn(adminRole.getId(),
                     java.util.Set.of(permission.getId())).isEmpty()) {
                 rolePermissionRepository.save(new RolePermission(null, adminRole.getId(), permission.getId(), null, null));
             }
@@ -165,7 +165,7 @@ public class DataInitializer implements CommandLineRunner {
     private void assignPermissionsToRole(Role role, List<String> permissionNames) {
         permissionNames.forEach(permissionName -> {
             permissionRepository.findByPermissionName(permissionName).ifPresent(permission -> {
-                if (rolePermissionRepository.findByRoleIdAndPermissionIdIn(role.getId(), 
+                if (rolePermissionRepository.findByRoleIdAndPermissionIdIn(role.getId(),
                         java.util.Set.of(permission.getId())).isEmpty()) {
                     rolePermissionRepository.save(new RolePermission(null, role.getId(), permission.getId(), null, null));
                 }

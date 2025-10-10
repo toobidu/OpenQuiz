@@ -10,7 +10,7 @@ public interface IRoomService {
 
     /**
      * Tạo phòng mới và tự động join vào phòng với quyền host
-     * 
+     *
      * @param request thông tin tạo phòng
      * @param userId  ID người tạo phòng
      * @return thông tin phòng đã tạo
@@ -19,7 +19,7 @@ public interface IRoomService {
 
     /**
      * Join vào phòng bằng room code
-     * 
+     *
      * @param request thông tin join phòng
      * @param userId  ID người join
      * @return thông tin phòng
@@ -28,7 +28,7 @@ public interface IRoomService {
 
     /**
      * Rời khỏi phòng
-     * 
+     *
      * @param roomId ID phòng
      * @param userId ID người rời phòng
      */
@@ -36,7 +36,7 @@ public interface IRoomService {
 
     /**
      * Lấy danh sách người chơi trong phòng
-     * 
+     *
      * @param roomId ID phòng
      * @return danh sách người chơi
      */
@@ -44,7 +44,7 @@ public interface IRoomService {
 
     /**
      * Kick người chơi khỏi phòng (chỉ host mới có quyền)
-     * 
+     *
      * @param roomId  ID phòng
      * @param request thông tin kick
      * @param hostId  ID host
@@ -53,7 +53,7 @@ public interface IRoomService {
 
     /**
      * Mời người chơi vào phòng
-     * 
+     *
      * @param request   thông tin mời
      * @param inviterId ID người mời
      * @return thông tin lời mời
@@ -62,7 +62,7 @@ public interface IRoomService {
 
     /**
      * Phản hồi lời mời (chấp nhận hoặc từ chối)
-     * 
+     *
      * @param invitationId ID lời mời
      * @param accept       true nếu chấp nhận, false nếu từ chối
      * @param userId       ID người được mời
@@ -72,7 +72,7 @@ public interface IRoomService {
 
     /**
      * Lấy danh sách lời mời của user
-     * 
+     *
      * @param userId ID user
      * @return danh sách lời mời
      */
@@ -80,7 +80,7 @@ public interface IRoomService {
 
     /**
      * Cập nhật thông tin phòng
-     * 
+     *
      * @param roomId  ID phòng
      * @param request thông tin cập nhật
      * @param userId  ID người cập nhật
@@ -90,7 +90,7 @@ public interface IRoomService {
 
     /**
      * Xóa phòng
-     * 
+     *
      * @param roomId ID phòng
      * @param userId ID người xóa
      */
@@ -98,7 +98,7 @@ public interface IRoomService {
 
     /**
      * Lấy thông tin phòng theo ID
-     * 
+     *
      * @param roomId ID phòng
      * @return thông tin phòng
      */
@@ -106,7 +106,7 @@ public interface IRoomService {
 
     /**
      * Lấy thông tin phòng theo room code
-     * 
+     *
      * @param roomCode mã phòng
      * @return thông tin phòng
      */
@@ -115,7 +115,7 @@ public interface IRoomService {
     /**
      * Lấy tất cả phòng đang WAITING với phân trang và tìm kiếm (đơn giản, không
      * filter phức tạp)
-     * 
+     *
      * @param page   số trang (bắt đầu từ 0)
      * @param size   số phòng mỗi trang
      * @param search từ khóa tìm kiếm (optional)
@@ -125,7 +125,7 @@ public interface IRoomService {
 
     /**
      * Join phòng trực tiếp bằng room ID (cho phòng public)
-     * 
+     *
      * @param roomId ID phòng
      * @param userId ID người join
      * @return thông tin phòng
@@ -134,7 +134,7 @@ public interface IRoomService {
 
     /**
      * Tìm kiếm nhanh phòng (không filter status)
-     * 
+     *
      * @param query từ khóa tìm kiếm
      * @return danh sách phòng (giới hạn 10 kết quả)
      */
@@ -142,7 +142,7 @@ public interface IRoomService {
 
     /**
      * Lấy danh sách phòng của user có phân trang và tìm kiếm
-     * 
+     *
      * @param userId ID user
      * @param page   số trang (bắt đầu từ 0)
      * @param size   số phòng mỗi trang
@@ -153,7 +153,7 @@ public interface IRoomService {
 
     /**
      * Chuyển quyền host
-     * 
+     *
      * @param roomId        ID phòng
      * @param newHostId     ID host mới
      * @param currentHostId ID host hiện tại
@@ -163,7 +163,7 @@ public interface IRoomService {
 
     /**
      * Bắt đầu game
-     * 
+     *
      * @param roomId ID phòng
      * @param userId ID host
      */
@@ -171,7 +171,7 @@ public interface IRoomService {
 
     /**
      * Kiểm tra user có phải host không
-     * 
+     *
      * @param roomId ID phòng
      * @param userId ID user
      * @return true nếu là host
@@ -180,7 +180,7 @@ public interface IRoomService {
 
     /**
      * Kiểm tra user có trong phòng không
-     * 
+     *
      * @param roomId ID phòng
      * @param userId ID user
      * @return true nếu có trong phòng

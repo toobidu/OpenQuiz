@@ -61,7 +61,7 @@ public class PermissionServiceImplement implements IPermissionService {
         Permission permission = permissionRepository.findById(id)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND.value(), MessageCode.PERMISSION_NOT_FOUND, "Permission not found"));
         if (request.getPermissionName() != null &&
-            !request.getPermissionName().trim().equalsIgnoreCase(permission.getPermissionName())) {
+                !request.getPermissionName().trim().equalsIgnoreCase(permission.getPermissionName())) {
             String normalizedPermissionName = request.getPermissionName().trim().toUpperCase();
             if (permissionRepository.findByPermissionName(normalizedPermissionName).isPresent()) {
                 throw new ApiException(HttpStatus.CONFLICT.value(), MessageCode.PERMISSION_ALREADY_EXISTS, "Permission name already exists");

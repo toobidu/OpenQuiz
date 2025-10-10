@@ -5,7 +5,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import io.minio.MinioClient;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Configuration
 public class MinioConfig {
 
@@ -20,9 +22,22 @@ public class MinioConfig {
 
     @Bean
     public MinioClient minioClient() {
-        return MinioClient.builder()
-                .endpoint(endpoint)
-                .credentials(accessKey, secretKey)
-                .build();
+        try {
+            log.info("Configuring MinIO client with endpoint: {}", endpoint);
+            log.info("Using access key: {}", accessKey.substring(0, Math.min(4, accessKey.length())) + "***");
+
+            MinioClient client = MinioClient.builder()
+                    .endpoint(endpoint)
+                    .credentials(accessKey, secretKey)
+                    // Thêm region để tránh lỗi signature
+                    .region("us-east-1")
+                    .build();
+
+            log.info("MinIO client configured successfully");
+            return client;
+        } catch (Exception e) {
+            log.error("Failed to configure MinIO client: {}", e.getMessage(), e);
+            throw new RuntimeException("MinIO configuration failed", e);
+        }
     }
 }

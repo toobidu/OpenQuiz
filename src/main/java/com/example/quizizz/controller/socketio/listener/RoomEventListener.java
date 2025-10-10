@@ -24,7 +24,7 @@ public class RoomEventListener {
             if (data.getRoomId() != null) {
                 // Join room in database first
                 var roomResponse = handler.getRoomService().joinRoomById(data.getRoomId(), userId);
-                
+
                 // Join Socket.IO room
                 client.joinRoom("room-" + data.getRoomId());
                 handler.getSessionManager().addRoomSession(client.getSessionId().toString(), data.getRoomId());
@@ -97,7 +97,7 @@ public class RoomEventListener {
                     return;
                 } catch (Exception roomJoinError) {
                     log.error("Error joining room via roomCode: {}", roomJoinError.getMessage());
-                    
+
                     // If user already joined, treat as success
                     if (roomJoinError.getMessage().contains("already joined")) {
                         log.info("User {} already joined room, connecting to Socket.IO", userId);
@@ -105,7 +105,7 @@ public class RoomEventListener {
                             var roomResponse = handler.getRoomService().getRoomByCode(data.getRoomCode());
                             client.joinRoom("room-" + roomResponse.getId());
                             handler.getSessionManager().addRoomSession(client.getSessionId().toString(), roomResponse.getId());
-                            
+
                             // Broadcast current players list
                             var players = handler.getRoomService().getRoomPlayers(roomResponse.getId());
                             handler.getSocketIOServer().getRoomOperations("room-" + roomResponse.getId())
@@ -113,7 +113,7 @@ public class RoomEventListener {
                                             "roomId", roomResponse.getId(),
                                             "players", players
                                     ));
-                            
+
                             client.sendEvent("join-room-success", Map.of(
                                     "success", true,
                                     "room", roomResponse,
@@ -123,7 +123,7 @@ public class RoomEventListener {
                             log.error("Failed to get room info: {}", getRoomError.getMessage());
                         }
                     }
-                    
+
                     throw roomJoinError; // Re-throw original error
                 }
             }
@@ -265,19 +265,19 @@ public class RoomEventListener {
                 var firstQuestion = handler.getGameService().getNextQuestion(data.getRoomId());
                 if (firstQuestion != null) {
                     handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
-                        .sendEvent("next-question", Map.of(
-                            "roomId", data.getRoomId(),
-                            "questionId", firstQuestion.getQuestionId(),
-                            "questionText", firstQuestion.getQuestionText(),
-                            "answers", firstQuestion.getAnswers().stream().map(a -> Map.of(
-                                "id", a.getId(),
-                                "text", a.getText()
-                            )).collect(java.util.stream.Collectors.toList()),
-                            "imageUrl", null,
-                            "timeLimit", firstQuestion.getTimeLimit(),
-                            "currentQuestionNumber", firstQuestion.getQuestionNumber(),
-                            "totalQuestions", firstQuestion.getTotalQuestions()
-                        ));
+                            .sendEvent("next-question", Map.of(
+                                    "roomId", data.getRoomId(),
+                                    "questionId", firstQuestion.getQuestionId(),
+                                    "questionText", firstQuestion.getQuestionText(),
+                                    "answers", firstQuestion.getAnswers().stream().map(a -> Map.of(
+                                            "id", a.getId(),
+                                            "text", a.getText()
+                                    )).collect(java.util.stream.Collectors.toList()),
+                                    "imageUrl", null,
+                                    "timeLimit", firstQuestion.getTimeLimit(),
+                                    "currentQuestionNumber", firstQuestion.getQuestionNumber(),
+                                    "totalQuestions", firstQuestion.getTotalQuestions()
+                            ));
                 }
             } catch (Exception questionError) {
                 log.error("Failed to get first question: {}", questionError.getMessage());

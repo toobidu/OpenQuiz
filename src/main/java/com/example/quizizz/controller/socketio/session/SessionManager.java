@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @Slf4j
 public class SessionManager {
-    
+
     private final Map<String, Long> sessionToUserId = new ConcurrentHashMap<>();
     private final Map<String, Long> sessionToRoomId = new ConcurrentHashMap<>();
 

@@ -34,14 +34,13 @@ public class GameEventListener {
             var result = handler.getGameService().submitAnswer(data.getRoomId(), userId, request);
 
             handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
-                .sendEvent("answer-submitted", Map.of(
-                    "roomId", data.getRoomId(),
-                    "userId", userId,
-                    "questionId", data.getQuestionId(),
-                    "isCorrect", result.getIsCorrect(),
-                    "score", result.getScore(),
-                    "correctAnswerId", result.getCorrectAnswerId()
-                ));
+                    .sendEvent("answer-submitted", Map.of(
+                            "roomId", data.getRoomId(),
+                            "userId", userId,
+                            "questionId", data.getQuestionId(),
+                            "isCorrect", result.getIsCorrect(),
+                            "score", result.getScore()
+                    ));
 
             log.info("User {} submitted answer for question {} in room {}", userId, data.getQuestionId(), data.getRoomId());
 
@@ -68,14 +67,13 @@ public class GameEventListener {
             var result = handler.getGameService().submitAnswer(roomId, userId, request);
 
             handler.getSocketIOServer().getRoomOperations("room-" + roomId)
-                .sendEvent("answer-submitted", Map.of(
-                    "roomId", roomId,
-                    "userId", userId,
-                    "questionId", data.getQuestionId(),
-                    "isCorrect", result.getIsCorrect(),
-                    "score", result.getScore(),
-                    "correctAnswerId", result.getCorrectAnswerId()
-                ));
+                    .sendEvent("answer-submitted", Map.of(
+                            "roomId", roomId,
+                            "userId", userId,
+                            "questionId", data.getQuestionId(),
+                            "isCorrect", result.getIsCorrect(),
+                            "score", result.getScore()
+                    ));
 
             log.info("[submitAnswer] user {} answered q {} in room {}", userId, data.getQuestionId(), roomId);
         } catch (Exception e) {
@@ -134,25 +132,22 @@ public class GameEventListener {
             if (nextQuestion != null && nextQuestion.getQuestionId() != null) {
                 // Flatten payload per spec
                 handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
-                    .sendEvent("next-question", Map.of(
-                        "roomId", data.getRoomId(),
-                        "questionId", nextQuestion.getQuestionId(),
-                        "questionText", nextQuestion.getQuestionText(),
-                        "answers", nextQuestion.getAnswers().stream().map(a -> Map.of(
-                            "id", a.getId(),
-                            "text", a.getText()
-                        )).collect(Collectors.toList()),
-                        "imageUrl", null,
-                        "timeLimit", nextQuestion.getTimeLimit(),
-                        "currentQuestionNumber", nextQuestion.getQuestionNumber(),
-                        "totalQuestions", nextQuestion.getTotalQuestions()
-                    ));
+                        .sendEvent("next-question", Map.of(
+                                "roomId", data.getRoomId(),
+                                "questionId", nextQuestion.getQuestionId(),
+                                "questionText", nextQuestion.getQuestionText(),
+                                "options", nextQuestion.getAnswers().stream().map(a -> a.getText()).collect(Collectors.toList()),
+                                "imageUrl", null,
+                                "timeLimit", nextQuestion.getTimeLimit(),
+                                "currentQuestionNumber", nextQuestion.getQuestionNumber(),
+                                "totalQuestions", nextQuestion.getTotalQuestions()
+                        ));
             } else {
                 handler.getSocketIOServer().getRoomOperations("room-" + data.getRoomId())
-                    .sendEvent("game-ended", Map.of(
-                        "roomId", data.getRoomId(),
-                        "gameState", Map.of("gameStatus", "FINISHED")
-                    ));
+                        .sendEvent("game-ended", Map.of(
+                                "roomId", data.getRoomId(),
+                                "gameState", Map.of("gameStatus", "FINISHED")
+                        ));
             }
 
             log.info("Next question requested by user {} in room {}", userId, data.getRoomId());

@@ -38,7 +38,7 @@ public class AuthController {
     @Operation(summary = "Đăng xuất", description = "Đăng xuất khỏi hệ thống")
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<String>> logout(@RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.substring(7); 
+        String token = authHeader.substring(7);
         authService.logout(token);
         return ResponseEntity.ok(ApiResponse.success(MessageCode.AUTH_LOGOUT_SUCCESS, "Logout successful"));
     }
@@ -60,7 +60,7 @@ public class AuthController {
     @Operation(summary = "Đổi mật khẩu", description = "Đổi mật khẩu cho người dùng hiện tại")
     @PostMapping("/change-password")
     public ResponseEntity<ApiResponse<ChangePasswordResponse>> changePassword(
-            @Valid @RequestBody ChangePasswordRequest request, 
+            @Valid @RequestBody ChangePasswordRequest request,
             Authentication auth) {
         Long userId = Long.valueOf(auth.getName());
         ChangePasswordResponse response = authService.changePassword(userId, request);
